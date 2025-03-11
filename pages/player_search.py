@@ -9,6 +9,11 @@ from data.team_list import get_team_colors
 players = load_players()
 trades = load_trades()
 
+st.set_page_config(
+    page_title="NFL Player Search",
+    page_icon="🏈",
+    layout="wide"
+)
 
 def clickable_link(label, url,image_url):
     """Creates a styled hyperlink that looks like a button."""
@@ -213,13 +218,6 @@ def show_player_page(player_id,player_name):
 
 
 def show_search_page():
-
-    st.set_page_config(
-        page_title="NFL Player Search",
-        page_icon="🏈",
-        layout="wide"
-    )
-
     # Load data
     st.sidebar.page_link('app.py', label='Home')
     st.sidebar.page_link('pages/trade_search.py', label='Trade Search')
