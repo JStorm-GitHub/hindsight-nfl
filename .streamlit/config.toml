@@ -4,3 +4,6 @@ base="dark"
 
 [client]
 showSidebarNavigation = false
+
+[ui]
+layout = "wide"
