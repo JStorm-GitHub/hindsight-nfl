@@ -25,17 +25,18 @@ def clickable_link(label, url,image_url):
             font-size: 16px;
             font-weight: bold;
             text-align: left;
-            text-decoration: none;
-            background-color: #2d425d;
-            color: white;
+            text-decoration: none !important;
+            background-color: #1E1E1E;
+            color: #cdcdcd !important;
             border-radius: 5px;
+            border: 2px solid #444444;
             cursor: pointer;
             transition: background-color 0.3s;
             width: 100%;
             margin-bottom: 10px;
         }}
         .custom-button:hover {{
-            background-color: #005f73;
+            background-color: #3A3A3A;
         }}
         .button-image {{
             width:100px;
@@ -51,11 +52,6 @@ def clickable_link(label, url,image_url):
     )
 
 def show_player_page(player_id,player_name):
-    st.set_page_config(
-        page_title=f"{player_name} Profile",
-        page_icon="🏈",
-        layout="wide"
-    )
 
     if st.button("Back to search"):
         st.query_params.clear()
@@ -79,7 +75,7 @@ def show_player_page(player_id,player_name):
 
     years = stats['season'].tolist()
 
-    options = ["Career"] + years + ["Custom"]
+    options = ["Career"] + years
 
     selected_year = st.segmented_control(
         "Select Year",
@@ -92,7 +88,6 @@ def show_player_page(player_id,player_name):
     plot_stats = get_career_player_stats(player_id)
     plot_stats["gameday"] = pd.to_datetime(plot_stats["gameday"])
     
-
     cut_trades = get_cut_trades(player_id)
     cut_trades['transaction_date'] = pd.to_datetime(cut_trades["transaction_date"])
 
@@ -116,9 +111,7 @@ def show_player_page(player_id,player_name):
         injuries = injuries[(injuries['transaction_date'] >= start_date) & (injuries['transaction_date'] < end_date)]
         st.subheader(f"{selected_year} Statistics")
     elif selected_year == "Career":
-        st.subheader(f"Career Statistics")
-    elif selected_year == "Custom":
-        st.subheader(f"Custom Statistics")  
+        st.subheader(f"Career Statistics") 
 
     show_stats = True
 
@@ -224,7 +217,7 @@ def show_search_page():
     st.set_page_config(
         page_title="NFL Player Search",
         page_icon="🏈",
-        layout="centered"
+        layout="wide"
     )
 
     # Load data
@@ -279,7 +272,7 @@ def show_search_page():
 
     if len(filtered_players)>0:
         for _, row in paginated_data.iterrows():
-            clickable_link(f"{row["name"]} ({row['position']}) - Drafted {row["draft_year"]}", f"?selected_id={row["player_id"]}&selected_name={row["name"]}&search={search_name}&category={draft_year_filter}",row['headshot_url'])
+            clickable_link(f"{row["name"]} ({row['position']}) - Drafted {row["draft_year"]}", f"?selected_id={row["player_id"]}&selected_name={row["name"]}",row['headshot_url'])
     else:
         st.write("No players found matching your criteria.")
 
@@ -299,8 +292,6 @@ def show_search_page():
 params = st.query_params
 selected_id = params.get("selected_id")
 selected_name = params.get("selected_name")
-search_query = params.get("search", "")
-category = params.get("category", "")
 
 if selected_id:
     show_player_page(selected_id,selected_name)

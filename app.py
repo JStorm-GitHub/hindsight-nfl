@@ -130,9 +130,13 @@ def calculate_trade_value():
         "P": 0.7,
     }
     
+    # Apply game-type weights
     performance_for_new_team["position_weight"] = performance_for_new_team["position"].map(position_weights).fillna(1.0)
     
+    # Apply position-type weights
     performance_for_new_team["win_weighted"] *= performance_for_new_team["position_weight"]
+
+    # Sum up per player, per trade
 
     performance_value_scores = performance_for_new_team.groupby(["name", "new_team"], as_index=False)["win_weighted"].sum()
 
@@ -146,10 +150,11 @@ st.set_page_config(
 )
 
 def main(): 
-    filtered_trades = find_valid_trades(trades)
-    trade_dates = filtered_trades['date']
-
-
+    
+    st.sidebar.page_link('app.py', label='Home')
+    st.sidebar.page_link('pages/trade_search.py', label='Trade Search')
+    st.sidebar.page_link('pages/player_search.py', label='Player Search')
+    st.sidebar.page_link('pages/about.py', label='About')
     
     st.markdown("""
         <style>
@@ -162,10 +167,8 @@ def main():
         </style>
     """, unsafe_allow_html=True)
 
-    st.sidebar.page_link('app.py', label='Home')
-    st.sidebar.page_link('pages/trade_search.py', label='Trade Search')
-    st.sidebar.page_link('pages/player_search.py', label='Player Search')
-    st.sidebar.page_link('pages/about.py', label='About')
+    filtered_trades = find_valid_trades(trades)
+    trade_dates = filtered_trades['date']
 
     st.title("NFL Trade Analysis")
     st.write("Welcome to the NFL Trade Analysis platform!")

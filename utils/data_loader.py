@@ -39,8 +39,6 @@ ORDER BY transaction_date;
     df = pd.read_sql_query(query,engine)
     df = df.drop_duplicates().reset_index(drop=True)
     df['date'] = pd.to_datetime(df['date'])
-
-
     return df
 
 

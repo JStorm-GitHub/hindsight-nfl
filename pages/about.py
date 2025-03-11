@@ -13,7 +13,7 @@ def about_page():
         The success of a trade is evaluated using the team's win/loss record after the player is acquired. The score is weighed
         so that postseason victories mean more. It also gives more weight to core positions like QB and
         RB. While the methodology is simple, it gives context to contentious decisions like the Chargers' 
-        [2004 NFL Draft Eli Manning trade](http://localhost:5000/?index=56&date=2004&team1=Chargers&team2=Giants&tscore1=9&tscore2=199)
+        [2004 NFL Draft Eli Manning trade](https://nfl-trade-analyzer-dxgzbjijmzh9t9xrgpdzri.streamlit.app/~/+/trade_search?index=56&date=2004&team1=Chargers&team2=Giants&tscore1=9&tscore2=199)
         and it may offer insights on how to avoid making similar mistakes on your fantasy team.
         """
     )

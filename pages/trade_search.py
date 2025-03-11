@@ -7,6 +7,7 @@ import re
 from data.team_list import get_team_logos, get_team_colors, get_team_name_map
 from utils.data_loader import load_players, load_trades, get_yearly_player_stats, get_career_player_stats, get_cut_trades, get_free_agency_trades, get_acquired_trades, get_injuries_trades, get_win_loss
 from app import find_valid_trades,calculate_trade_value
+import urllib.parse
 
 players = load_players()
 trades = load_trades()
@@ -16,17 +17,6 @@ st.set_page_config(
     page_icon="🏈",
     layout="wide"
 )
-            # <div class="date">{date}</div>
-            # <div class="button-line">
-            #     <img src="{teamLogo1}" class="button-image">
-            #     <h4>{team1}' trade score: {team1Value}</h4>
-            #     <span>{trade1}</span>
-            # </div>
-            # <div class="button-line">
-            #     <img src="{teamLogo2}" class="button-image">
-            #     <h4>{team2}' trade score: {team2Value}</h4>
-            #     <span>{trade2}</span>
-            # </div>
 
 def clickable_link(date, trade1, trade2, url, teamLogo1, teamLogo2, team1Value, team2Value,team1,team2):
     """Creates a styled hyperlink that looks like a button."""
@@ -36,12 +26,12 @@ def clickable_link(date, trade1, trade2, url, teamLogo1, teamLogo2, team1Value, 
             <div class="trade-container">
                 <div class="button-line">
                     <img src="{teamLogo1}" class="button-image">
-                    <h4>{team1}' trade score: {team1Value}</h4>
+                    <h4>{team1}' trade score: <span style="background-color: #3b3c51; color: black; padding: 3px 6px; border-radius: 5px; border: 1px solid #21233b;">{team1Value}</span></h4>
                     <span>{trade1}</span>
                 </div>
                 <div class="button-line">
                     <img src="{teamLogo2}" class="button-image">
-                    <h4>{team2}' trade score: {team2Value}</h4>
+                    <h4>{team2}' trade score: <span style="background-color: #3b3c51; color: black; padding: 3px 6px; border-radius: 5px; border: 1px solid #21233b;">{team2Value}</span></h4>
                     <span>{trade2}</span>
                 </div>
             </div>
@@ -121,17 +111,21 @@ def pull_trade_value(index, performance, filtered_trades):
     def avg_match_list(player_match_list):
         total_sum = 0  
         count = len(player_match_list) if player_match_list else 1  
+        win_weighted_list = []  
+
         for player_name in player_match_list:
             player_data = performance[performance['name'] == player_name]
             if not player_data.empty:
-                total_sum += player_data["win_weighted"].sum()
-        return total_sum / count  
+                win_weighted = player_data["win_weighted"].sum()
+                total_sum += win_weighted
+                win_weighted_list.append((win_weighted, player_name))  # Store tuple
+        return total_sum / count, win_weighted_list   
     
     # Compute per-team impact
-    team1_value = avg_match_list(team1_list)  
-    team2_value = avg_match_list(team2_list)  
+    team1_value,win_weighted_list1 = avg_match_list(team1_list)  
+    team2_value,win_weighted_list2 = avg_match_list(team2_list)
 
-    return team1_value, team2_value  
+    return team1_value, team2_value, 
 
 
 def show_trade_comp_page(index,date,team1,team2,tscore1,tscore2):
@@ -155,13 +149,14 @@ def show_trade_comp_page(index,date,team1,team2,tscore1,tscore2):
 
     def show_draft_list(draft_match_list):
         for draft_number,player_name in draft_match_list:
-            player_data = players[(players['name'] == player_name) & (players['draft_position'] == int(draft_number))]
+            player_data = players[(players['draft_position'] == int(draft_number)) & (players['name'] == player_name.strip())]
+
             if not player_data.empty:
                 player_page(player_data.iloc[0])
 
     def show_player_list(player_match_list):
         for player_name in player_match_list:
-            player_data = players[(players['name'] == player_name)]
+            player_data = players[(players['name'] == player_name.strip())]
             if not player_data.empty:
                 player_page(player_data.iloc[0])
                 
@@ -182,14 +177,18 @@ def player_page(player_data):
     ### Gets called per player in drafted and normal player list. 
     player_name = player_data["name"]
     player_id = player_data["player_id"]
-        
-
+    
+    encoded_player_name = urllib.parse.quote(player_name)
+    
+    url = f"https://nfl-trade-analyzer-dxgzbjijmzh9t9xrgpdzri.streamlit.app/~/+/player_search?selected_id={player_id}&selected_name={encoded_player_name}"
+    
     col1, col2, col3= st.columns([1,3,3], gap="small")
     with col1:
         st.image(player_data['headshot_url'],use_container_width=False,width=200)
     with col2:
         st.subheader("Player profile:")
-        st.title(f"{player_name} ({player_data['position']})")
+        st.markdown(f"## [{player_name} ({player_data['position']})]({url})", unsafe_allow_html=True)
+        # st.header(f"{player_name} ({player_data['position']})")
     with col3:
         st.subheader("Player Information")
         st.write(f"Born: {player_data['birthdate']}")
@@ -200,7 +199,7 @@ def player_page(player_data):
 
     years = stats['season'].tolist()
 
-    options = ["Career"] + years + ["Custom"]
+    options = ["Career"] + years
 
     selected_year = st.segmented_control(
         "Select Year",
@@ -239,8 +238,7 @@ def player_page(player_data):
         st.subheader(f"{selected_year} Statistics")
     elif selected_year == "Career":
         st.subheader(f"Career Statistics")
-    elif selected_year == "Custom":
-        st.subheader(f"Custom Statistics")  
+
 
     show_stats = True
 
@@ -340,11 +338,16 @@ def player_page(player_data):
         fig.update_layout(showlegend=True, legend = {'traceorder':'normal'})
         
         st.plotly_chart(fig)
-
+        
+    st.divider()
 
 
 def trade_main():
 
+    st.sidebar.page_link('app.py', label='Home')
+    st.sidebar.page_link('pages/trade_search.py', label='Trade Search')
+    st.sidebar.page_link('pages/player_search.py', label='Player Search')
+    st.sidebar.page_link('pages/about.py', label='About')
 
     # copies formatted valid trade
     filtered_trades = find_valid_trades(trades)
@@ -354,23 +357,9 @@ def trade_main():
 
     performance_value = calculate_trade_value()
 
-    st.sidebar.page_link('app.py', label='Home')
-    st.sidebar.page_link('pages/trade_search.py', label='Trade Search')
-    st.sidebar.page_link('pages/player_search.py', label='Player Search')
-    st.sidebar.page_link('pages/about.py', label='About')
-
     st.title("NFL Trade Search")
 
     trade_dates = filtered_trades['date']
-
-    # col1, col2, col3 = st.columns(3)
-    # with col1:
-    #     st.metric("Total Players", len(players))
-    # with col2:
-    #     st.metric("Total Trades", len(filtered_trades))
-    # with col3:
-    #     earliest_trade = pd.to_datetime(trade_dates).min().year if len(trades) > 0 else "No trades"
-    #     st.metric("Earliest Trade", str(earliest_trade))
 
     ITEMS_PER_PAGE = 5
 
@@ -420,7 +409,7 @@ def trade_main():
             clickable_link(f"{date}",
                            f"{team1} acquire {row["acquired_team1"]}", 
                            f"{team2} acquire {row["acquired_team2"]}", 
-                           f"?index={index}&date={row["date"].year}&team1={row["team1"]}&team2={row["team2"]}&tscore1={team1Value}&tscore2={team2Value}", 
+                           f"?index={index}&date={date}&team1={row["team1"]}&team2={row["team2"]}&tscore1={team1Value}&tscore2={team2Value}", 
                            team1Logo,team2Logo,team1Value,team2Value,team1,team2)
     else:
         st.write("No players found matching your criteria.")
