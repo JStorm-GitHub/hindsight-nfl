@@ -220,6 +220,7 @@ def show_player_page(player_id,player_name):
 
 
 def show_search_page():
+
     st.set_page_config(
         page_title="NFL Player Search",
         page_icon="🏈",
@@ -227,10 +228,12 @@ def show_search_page():
     )
 
     # Load data
-    st.sidebar.page_link('app.py', label='Trades')
+    st.sidebar.page_link('app.py', label='Home')
+    st.sidebar.page_link('pages/trade_search.py', label='Trade Search')
     st.sidebar.page_link('pages/player_search.py', label='Player Search')
     st.sidebar.page_link('pages/about.py', label='About')
-    st.title("Player Search")
+
+    st.title("NFL Player Search")
 
     if "page" not in st.session_state:
         st.session_state.page = 1

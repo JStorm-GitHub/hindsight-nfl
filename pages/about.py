@@ -2,7 +2,8 @@ import streamlit as st
 
 def about_page():
     st.title("📊 About")
-    st.sidebar.page_link('app.py', label='Trades')
+    st.sidebar.page_link('app.py', label='Home')
+    st.sidebar.page_link('pages/trade_search.py', label='Trade Search')
     st.sidebar.page_link('pages/player_search.py', label='Player Search')
     st.sidebar.page_link('pages/about.py', label='About')
     # Introduction
