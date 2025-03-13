@@ -4,9 +4,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import re
-from data.team_list import get_team_logos, get_team_colors, get_team_name_map
-from utils.data_loader import load_players, load_trades, get_yearly_player_stats, get_career_player_stats, get_cut_trades, get_free_agency_trades, get_acquired_trades, get_injuries_trades, get_win_loss
-
+from data.team_list import get_team_name_map
+from utils.data_loader import load_players, load_trades, get_win_loss, get_ranked_players_per_team
 
 players = load_players()
 trades = load_trades()
@@ -62,6 +61,7 @@ def find_valid_trades(trades_df):
 
     return valid_trades_df
 
+
 @st.cache_data
 def calculate_trade_value():
     # formulates trade score using weighing
@@ -70,6 +70,15 @@ def calculate_trade_value():
     weekly_performance = get_win_loss()
     
     team_name_map = get_team_name_map()
+
+    qb_performance = get_ranked_players_per_team("QB")
+    rb_performance = get_ranked_players_per_team("RB")
+    wr_performance = get_ranked_players_per_team("WR")
+    te_performance = get_ranked_players_per_team("TE")
+    k_performance = get_ranked_players_per_team("K")
+    p_performance = get_ranked_players_per_team("P")
+
+    player_performance = pd.concat([qb_performance, rb_performance, wr_performance,te_performance,k_performance,p_performance], ignore_index=True)
 
     filtered_trades["team1"] = filtered_trades["team1"].map(team_name_map)
     filtered_trades["team2"] = filtered_trades["team2"].map(team_name_map)
@@ -105,17 +114,31 @@ def calculate_trade_value():
     ]
 
     # Assign weights to wins
-    def assign_weight(week):
-        if week < 18:  # Regular season
-            return 1
-        elif week < 20:  # Wild Card / Divisional
-            return 3
-        elif week == 20:  # Conference Championship
-            return 5
-        else:  # Super Bowl
-            return 10
+    def assign_weight(week,win):
+        if win == 1:  # Win
+            if week < 18:  # Regular season
+                return 1
+            elif week < 20:  # Wild Card / Divisional
+                return 3
+            elif week == 20:  # Conference Championship
+                return 5
+            else:  # Super Bowl
+                return 10
+        else:  # Loss
+            if week < 18:  # Regular season
+                return -0.5
+            elif week < 20:  # Wild Card / Divisional
+                return -1.5
+            elif week == 20:  # Conference Championship
+                return -2.5
+            else:  # Super Bowl
+                return -5
 
-    performance_for_new_team["win_weighted"] = performance_for_new_team["win"] * performance_for_new_team["week"].apply(assign_weight)
+    performance_for_new_team["win_weighted"] = performance_for_new_team.apply(
+        lambda row: assign_weight(row["week"], row["win"]), axis=1
+    )
+
+    performance_for_new_team["win_weighted"] = performance_for_new_team["win_weighted"].fillna(0)
 
     position_weights = {
         "QB": 1.5,  # Most impact
@@ -130,13 +153,14 @@ def calculate_trade_value():
         "P": 0.7,
     }
     
-    # Apply game-type weights
+    # Apply position weights
     performance_for_new_team["position_weight"] = performance_for_new_team["position"].map(position_weights).fillna(1.0)
-    
-    # Apply position-type weights
     performance_for_new_team["win_weighted"] *= performance_for_new_team["position_weight"]
 
-    # Sum up per player, per trade
+    # Apply Performance Score
+    performance_for_new_team = performance_for_new_team.merge(player_performance, on="name", how="left")
+    performance_for_new_team["percent_rank"] = performance_for_new_team["percent_rank"].fillna(0.3)
+    performance_for_new_team["win_weighted"] *= performance_for_new_team["percent_rank"]
 
     performance_value_scores = performance_for_new_team.groupby(["name", "new_team"], as_index=False)["win_weighted"].sum()
 
@@ -144,7 +168,7 @@ def calculate_trade_value():
 
 
 st.set_page_config(
-    page_title="NFL Trade Analysis",
+    page_title="Hindsight - NFL Trade Analysis",
     page_icon="🏈",
     layout="wide"
 )
@@ -170,8 +194,8 @@ def main():
     filtered_trades = find_valid_trades(trades)
     trade_dates = filtered_trades['date']
 
-    st.title("NFL Trade Analysis")
-    st.write("Welcome to the NFL Trade Analysis platform!")
+    st.title("Hindsight - NFL Trade Analysis")
+    st.write("Welcome to Hindsight, an NFL Trade Analysis platform!")
     
     col1, col2, col3 = st.columns(3)
     with col1:

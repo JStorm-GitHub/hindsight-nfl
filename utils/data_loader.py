@@ -1,11 +1,12 @@
 from sqlalchemy import create_engine
+from data.all_position_stats import get_bulk_position_stats, get_simple_position_stats
 import pandas as pd
 
 NFL_DATA = "sqlite:///data/nfl_merged.db"
 
 NFL_TRADE = "sqlite:///data/trade_data.db"
 
-
+# this loads all unique trades
 def load_trades():
     engine = create_engine(NFL_TRADE)
     query = """
@@ -41,7 +42,7 @@ ORDER BY transaction_date;
     df['date'] = pd.to_datetime(df['date'])
     return df
 
-
+# this loads essential player data
 def load_players():
     engine = create_engine(NFL_DATA)
     query = """
@@ -69,15 +70,15 @@ ORDER BY name ASC
     df['headshot_url'] = df['headshot_url'].fillna("https://static.www.nfl.com/image/private/f_auto,q_auto/league/tvzbhead7hjhqpcbilgc")
     return df
 
-
-def get_yearly_player_stats(player_id):
+# this returns the 
+def get_career_seasons(player_id):
     
     engine = create_engine(NFL_DATA)
     query = """
-    SELECT season, recent_team as team, SUM(completions) as completions,SUM(attempts) as attempts,SUM(passing_yards) as passing_yards,SUM(passing_tds) as passing_tds,SUM(interceptions) as interceptions,SUM(sacks) as sacks,SUM(sack_yards) as sack_yards,SUM(sack_fumbles) as sack_fumbles,SUM(sack_fumbles_lost) as sack_fumbles_lost
+        SELECT season
     FROM nfl_data
-    WHERE player_id = :_id 
-    GROUP BY season, player_id
+    WHERE player_id = :_id
+    GROUP BY season
     ORDER BY player_display_name asc
 """
     data = {'_id':player_id}
@@ -85,7 +86,7 @@ def get_yearly_player_stats(player_id):
 
     return df
 
-
+# this returns all stats for any given player
 def get_career_player_stats(player_id):
 
     engine = create_engine(NFL_DATA)
@@ -110,31 +111,7 @@ def get_career_player_stats(player_id):
     df = pd.read_sql_query(query, engine, params=data)
     return df
 
-
-def get_player_trades(player_id):
-
-    engine = create_engine(NFL_TRADE)
-    query = """
-    SELECT player_id, player_name, transaction_date, team, status, notes
-    FROM transactions
-    WHERE player_id = :_id
-    """
-    data = {'_id':player_id}
-    df = pd.read_sql_query(query, engine, params=data)
-    return df
-
-def get_weekly_per_year_passing_player_stats(player_id,season):
-    engine = create_engine(NFL_DATA)
-    query = """
-    SELECT season, week, gameday, recent_team as team, completions, attempts, passing_yards, passing_tds, interceptions, sacks, sack_yards, sack_fumbles, sack_fumbles_lost
-    FROM nfl_data
-    WHERE player_id = :_id AND season = :_season
-    ORDER BY season asc, week asc
-    """
-    data = {'_id':player_id, '_season':season}
-    df = pd.read_sql_query(query, engine, params=data)
-    return df
-
+# this gets all "fired" like reports for a player
 def get_cut_trades(player_id):
     engine = create_engine(NFL_TRADE)
     query = """
@@ -151,6 +128,7 @@ WHERE (LOWER(notes) LIKE '%released%'
     df = pd.read_sql_query(query, engine, params=data)
     return df
 
+# this gets all "free agency" like reports for a player
 def get_free_agency_trades(player_id):
     engine = create_engine(NFL_TRADE)
     query = """
@@ -164,6 +142,7 @@ WHERE (LOWER(notes) LIKE '%free agent%'
     df = pd.read_sql_query(query, engine, params=data)
     return df
 
+# this gets all "draft" like reports for a player
 def get_acquired_trades(player_id):
     engine = create_engine(NFL_TRADE)
     query = """
@@ -175,6 +154,7 @@ WHERE (LOWER(notes) LIKE '%draft%')
     df = pd.read_sql_query(query, engine, params=data)
     return df
 
+# this gets all "injury" like reports for a player
 def get_injuries_trades(player_id):
     engine = create_engine(NFL_TRADE)
     query = """
@@ -189,9 +169,8 @@ WHERE (LOWER(notes) LIKE '%injury%'
     df = pd.read_sql_query(query, engine, params=data)
     return df
 
-
+# this gets the win/loss ratio of all players
 def get_win_loss():
-
     engine = create_engine(NFL_DATA)
     query = """
     SELECT 
@@ -205,4 +184,78 @@ def get_win_loss():
     ORDER BY season asc, week asc
     """
     df = pd.read_sql_query(query, engine)
+    return df
+
+### hindsight data
+
+# this returns a player's average full stats for their entire career
+def get_player_full_career_average(player_id,position):
+    position_stats = get_bulk_position_stats(position)
+    engine = create_engine(NFL_DATA)
+    query = f"""
+    SELECT 
+        player_id,
+        {position_stats},
+        MIN(gameday) AS start_date, 
+        MAX(gameday) AS end_date,
+        MIN(season) AS start_season,
+		MAX(season) AS end_season
+    FROM nfl_data
+    WHERE player_id = :_player_id
+    GROUP BY player_id
+    """
+    data = {'_player_id':player_id}
+    df = pd.read_sql_query(query, engine, params=data)
+    return df
+
+# this returns the average stats for a given position entire career
+def get_league_per_game_average(position, start_date, end_date):
+    position_stats = get_bulk_position_stats(position)
+    engine = create_engine(NFL_DATA)
+    query = f"""
+    SELECT 
+        position,
+	    gameday,
+        {position_stats}
+    FROM nfl_data
+    WHERE position = :_position AND gameday BETWEEN :_start_date AND :_end_date
+    GROUP BY position, gameday
+    ORDER BY gameday ASC
+    """
+    data = {'_position':position, '_start_date':start_date, '_end_date':end_date}
+    df = pd.read_sql_query(query, engine, params=data)
+    return df
+
+# this gets the ranked performance of a player during their tenure at all teams they played on.
+def get_ranked_players_per_team(position):
+    position_stats = get_simple_position_stats(position)
+    engine = create_engine(NFL_DATA)
+    query = f"""
+    WITH qb_ranks AS (
+        SELECT 
+            player_id,
+            player_display_name AS name,
+            recent_team AS team,
+            {position_stats}
+        FROM nfl_data
+        WHERE position = :_position
+        GROUP BY player_id, player_display_name, recent_team
+    )
+    SELECT 
+        p.player_id,
+        p.name,
+        p.team,
+        q.percent_rank
+    FROM (
+        SELECT DISTINCT player_id, player_display_name AS name, recent_team AS team
+        FROM nfl_data
+    ) p
+    LEFT JOIN qb_ranks q 
+        ON p.player_id = q.player_id 
+        AND p.team = q.team
+    ORDER BY p.team ASC;
+    """
+    data = {'_position':position}
+    df = pd.read_sql_query(query, engine, params=data)
+    df = df.dropna()
     return df

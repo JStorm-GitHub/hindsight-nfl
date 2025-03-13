@@ -1,8 +1,12 @@
-# 📊 NFL Trade Analyzer
+# 📊 Hindsight - NFL Trade Analyzer
 
 🚀 **[View Live Demo](https://nfl-trade-analyzer-dxgzbjijmzh9t9xrgpdzri.streamlit.app/)**
 
-Welcome to **NFL Trade Analyzer**! This tool provides a straightforward way to evaluate the success of NFL trades. It assesses a trade's impact based on the team's win/loss record after acquiring a player, giving extra weight to postseason victories and key positions like **Quarterback (QB)** and **Running Back (RB)**.
+Welcome to **Hindsight**, a historical NFL trade analyzer! This tool provides a straightforward way to evaluate the success of NFL trades. It assesses a trade's impact based on the team's win/loss record after acquiring a player, giving extra weight to postseason victories and key positions like **Quarterback (QB)** and **Running Back (RB)**. 
+
+It also weighs a player's league-wide rank in stats like **total passing yards** and **total rushing yards**, depending on the position.
+
+Because these trades are historical, all Hindsight Trade Scores use data from after the player is traded but during the time they're playing for the acquiring team.
 
 While the methodology is simple, it provides context for controversial trades like the Chargers' [2004 NFL Draft Eli Manning trade](https://nfl-trade-analyzer-dxgzbjijmzh9t9xrgpdzri.streamlit.app/~/+/trade_search?index=56&date=2004&team1=Chargers&team2=Giants&tscore1=9&tscore2=199) and may help fantasy football managers avoid similar mistakes.
 
@@ -29,7 +33,6 @@ While efforts are made to ensure accuracy, users should cross-check insights wit
 ---
 
 ## 🚀 Get Started
-
 
 
 This application is built using **Streamlit**. To run it locally:

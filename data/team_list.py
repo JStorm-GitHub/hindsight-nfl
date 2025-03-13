@@ -53,7 +53,7 @@ def get_team_colors():
     return team_colors
 
 def get_team_name_map():
-    team_name_map = {
+    TEAM_NAME_MAP = {
     "Bills": "BUF",
     "Dolphins": "MIA",
     "Patriots": "NE",
@@ -66,14 +66,19 @@ def get_team_name_map():
     "Colts": "IND",
     "Jaguars": "JAX",
     "Titans": "TEN",
+    "Oilers": "TEN",  # Houston Oilers → Tennessee Titans
     "Broncos": "DEN",
     "Chiefs": "KC",
     "Raiders": "LV",
+    "Oakland Raiders": "LV",  # Oakland → Las Vegas
+    "LA Raiders": "LV",  # LA Raiders → Las Vegas
     "Chargers": "LAC",
+    "San Diego Chargers": "LAC",  # San Diego → LA
     "Cowboys": "DAL",
     "Giants": "NYG",
     "Eagles": "PHI",
     "Commanders": "WAS",
+    "Washington Football Team": "WAS",  # Temporary name (2020-2021)
     "Redskins": "WAS",  
     "Bears": "CHI",
     "Lions": "DET",
@@ -85,7 +90,8 @@ def get_team_name_map():
     "Buccaneers": "TB",
     "Cardinals": "ARI",
     "Rams": "LAR",
+    "St. Louis Rams": "LAR",  # St. Louis → LA
     "49ers": "SF",
     "Seahawks": "SEA",
     }
-    return team_name_map
+    return TEAM_NAME_MAP

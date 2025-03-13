@@ -1,6 +1,17 @@
 import streamlit as st
 import pandas as pd
-from utils.data_loader import load_players, load_trades,get_yearly_player_stats,get_career_player_stats,get_cut_trades,get_free_agency_trades,get_acquired_trades,get_injuries_trades
+from utils.data_loader import (load_players, 
+                               load_trades,
+                               get_career_seasons,
+                               get_career_player_stats,
+                               get_cut_trades,
+                               get_free_agency_trades,
+                               get_acquired_trades,
+                               get_injuries_trades,
+                               get_ranked_players_per_team,
+                               get_player_full_career_average,
+                               get_league_per_game_average,
+                            )
 import plotly.express as px
 import plotly.graph_objects as go
 from data.team_list import get_team_colors
@@ -10,7 +21,7 @@ players = load_players()
 trades = load_trades()
 
 st.set_page_config(
-    page_title="NFL Player Search",
+    page_title="Hindsight Player Search",
     page_icon="🏈",
     layout="wide"
 )
@@ -64,6 +75,14 @@ def show_player_page(player_id,player_name):
 
     player_data = players[players['player_id'] == player_id].iloc[0]
 
+    player_name = player_data["name"]
+    
+    player_id = player_data["player_id"]
+
+    player_position = player_data["position"]
+
+    player_full_career_avg_stats = get_player_full_career_average(player_id,player_position)
+
     col1, col2, col3= st.columns([1,3,3], gap="small")
     with col1:
         st.image(player_data['headshot_url'],use_container_width=False,width=200)
@@ -76,7 +95,7 @@ def show_player_page(player_id,player_name):
         st.write(f"College: {player_data['college']}")
         st.write(f"Draft: Round {player_data['draft_position']} ({player_data['draft_year']})")
 
-    stats = get_yearly_player_stats(player_id)
+    stats = get_career_seasons(player_id)
 
     years = stats['season'].tolist()
 
@@ -90,8 +109,14 @@ def show_player_page(player_id,player_name):
         default="Career"
     )
 
+    player_start_date = player_full_career_avg_stats['start_date'].iloc[0]
+    player_end_date = player_full_career_avg_stats['end_date'].iloc[0]
+
     plot_stats = get_career_player_stats(player_id)
     plot_stats["gameday"] = pd.to_datetime(plot_stats["gameday"])
+    
+    avg_plot_stats = get_league_per_game_average(player_position,player_start_date,player_end_date)
+    avg_plot_stats["gameday"] = pd.to_datetime(avg_plot_stats["gameday"])
     
     cut_trades = get_cut_trades(player_id)
     cut_trades['transaction_date'] = pd.to_datetime(cut_trades["transaction_date"])
@@ -110,6 +135,7 @@ def show_player_page(player_id,player_name):
         start_date = pd.Timestamp(f"{selected_year}-09-01")
         end_date = pd.Timestamp(f"{selected_year + 1}-09-01")
         plot_stats = plot_stats[plot_stats['season'] == selected_year]
+        avg_plot_stats = avg_plot_stats[(avg_plot_stats['gameday'] >= start_date) & (avg_plot_stats['gameday'] < end_date)]
         cut_trades = cut_trades[(cut_trades['transaction_date'] >= start_date) & (cut_trades['transaction_date'] < end_date)]
         free_agency = free_agency[(free_agency['transaction_date'] >= start_date) & (free_agency['transaction_date'] < end_date)]
         acquired_trades = acquired_trades[(acquired_trades['transaction_date'] >= start_date) & (acquired_trades['transaction_date'] < end_date)]
@@ -164,6 +190,15 @@ def show_player_page(player_id,player_name):
 
         fig = px.line(plot_stats, x="gameday", y=f"Average_{selected_stat}", title=f"{selected_stat} Over Time")
         
+        fig.add_trace(go.Scatter(
+            x = avg_plot_stats["gameday"],
+            y = avg_plot_stats[f"avg_{selected_stat}"],
+            mode="lines",
+            line=dict(color='#95238b'),
+            name="League Average",
+            opacity = 0.65
+        ))
+
         for team in plot_stats['team'].unique():
             team_data = plot_stats[plot_stats['team'] == team]
             fig.add_trace(go.Scatter(
@@ -216,6 +251,10 @@ def show_player_page(player_id,player_name):
 
         st.plotly_chart(fig)
 
+        st.subheader(f"Ranked {player_position} Performance per Team")
+        player_rank = get_ranked_players_per_team(player_position)
+        st.dataframe(player_rank[player_rank["player_id"] == player_id])
+
 
 def show_search_page():
     # Load data
@@ -224,7 +263,7 @@ def show_search_page():
     st.sidebar.page_link('pages/player_search.py', label='Player Search')
     st.sidebar.page_link('pages/about.py', label='About')
 
-    st.title("NFL Player Search")
+    st.title("Hindsight Player Search")
 
     if "page" not in st.session_state:
         st.session_state.page = 1

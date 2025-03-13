@@ -4,8 +4,20 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import re
-from data.team_list import get_team_logos, get_team_colors, get_team_name_map
-from utils.data_loader import load_players, load_trades, get_yearly_player_stats, get_career_player_stats, get_cut_trades, get_free_agency_trades, get_acquired_trades, get_injuries_trades, get_win_loss
+from data.team_list import get_team_logos, get_team_colors
+from utils.data_loader import (load_players, 
+                               load_trades, 
+                               get_career_seasons, 
+                               get_career_player_stats, 
+                               get_cut_trades, 
+                               get_free_agency_trades, 
+                               get_acquired_trades, 
+                               get_injuries_trades,
+                               get_league_per_game_average,
+                               get_player_full_career_average,
+                               get_ranked_players_per_team
+
+) 
 from app import find_valid_trades,calculate_trade_value
 import urllib.parse
 
@@ -13,7 +25,7 @@ players = load_players()
 trades = load_trades()
 
 st.set_page_config(
-    page_title="NFL Trade Search",
+    page_title="Hindsight Trade Search",
     page_icon="🏈",
     layout="wide"
 )
@@ -150,15 +162,18 @@ def show_trade_comp_page(index,date,team1,team2,tscore1,tscore2):
     def show_draft_list(draft_match_list):
         for draft_number,player_name in draft_match_list:
             player_data = players[(players['draft_position'] == int(draft_number)) & (players['name'] == player_name.strip())]
-
             if not player_data.empty:
                 player_page(player_data.iloc[0])
+            else:
+                st.write(f"No data given for {player_name}")
 
     def show_player_list(player_match_list):
         for player_name in player_match_list:
             player_data = players[(players['name'] == player_name.strip())]
             if not player_data.empty:
                 player_page(player_data.iloc[0])
+            else:
+                st.write(f"No data given for {player_name}")
                 
     col1,col2 = st.columns(2)
     with col1:
@@ -176,8 +191,13 @@ def show_trade_comp_page(index,date,team1,team2,tscore1,tscore2):
 def player_page(player_data):
     ### Gets called per player in drafted and normal player list. 
     player_name = player_data["name"]
+
     player_id = player_data["player_id"]
-    
+
+    player_position = player_data["position"]
+
+    player_full_career_avg_stats = get_player_full_career_average(player_id,player_position)
+
     encoded_player_name = urllib.parse.quote(player_name)
     
     url = f"https://nfl-trade-analyzer-dxgzbjijmzh9t9xrgpdzri.streamlit.app/~/+/player_search?selected_id={player_id}&selected_name={encoded_player_name}"
@@ -186,8 +206,7 @@ def player_page(player_data):
     with col1:
         st.image(player_data['headshot_url'],use_container_width=False,width=200)
     with col2:
-        st.subheader("Player profile:")
-        st.markdown(f"## [{player_name} ({player_data['position']})]({url})", unsafe_allow_html=True)
+        st.markdown(f"## [{player_name} ({player_position})]({url})", unsafe_allow_html=True)
         # st.header(f"{player_name} ({player_data['position']})")
     with col3:
         st.subheader("Player Information")
@@ -195,7 +214,8 @@ def player_page(player_data):
         st.write(f"College: {player_data['college']}")
         st.write(f"Draft: Round {player_data['draft_position']} ({player_data['draft_year']})")
     
-    stats = get_yearly_player_stats(player_id)
+    #in future, replace with hindsight
+    stats = get_career_seasons(player_id)
 
     years = stats['season'].tolist()
 
@@ -210,9 +230,15 @@ def player_page(player_data):
         key = f"{player_name}"
     )
 
+    player_start_date = player_full_career_avg_stats['start_date'].iloc[0]
+    player_end_date = player_full_career_avg_stats['end_date'].iloc[0]
+
     # Set up trade data
     plot_stats = get_career_player_stats(player_id)
     plot_stats["gameday"] = pd.to_datetime(plot_stats["gameday"])
+
+    avg_plot_stats = get_league_per_game_average(player_position,player_start_date,player_end_date)
+    avg_plot_stats["gameday"] = pd.to_datetime(avg_plot_stats["gameday"])
 
     cut_trades = get_cut_trades(player_id)
     cut_trades['transaction_date'] = pd.to_datetime(cut_trades["transaction_date"])
@@ -231,6 +257,7 @@ def player_page(player_data):
         start_date = pd.Timestamp(f"{selected_year}-09-01")
         end_date = pd.Timestamp(f"{selected_year + 1}-09-01")
         plot_stats = plot_stats[plot_stats['season'] == selected_year]
+        avg_plot_stats = avg_plot_stats[(avg_plot_stats['gameday'] >= start_date) & (avg_plot_stats['gameday'] < end_date)]
         cut_trades = cut_trades[(cut_trades['transaction_date'] >= start_date) & (cut_trades['transaction_date'] < end_date)]
         free_agency = free_agency[(free_agency['transaction_date'] >= start_date) & (free_agency['transaction_date'] < end_date)]
         acquired_trades = acquired_trades[(acquired_trades['transaction_date'] >= start_date) & (acquired_trades['transaction_date'] < end_date)]
@@ -283,8 +310,18 @@ def player_page(player_data):
         team_colors = get_team_colors()
         
         plot_stats[f"Average_{selected_stat}"] = plot_stats[selected_stat].rolling(window=5, min_periods=1).mean()
-        fig = px.line(plot_stats, x="gameday", y=f"{selected_stat}", title=f"{selected_stat} Over Time")
+        fig = px.line(plot_stats, x="gameday", y=f"Average_{selected_stat}", title=f"{selected_stat} Over Time")
         
+        avg_plot_stats[f"avg_{selected_stat}"] = avg_plot_stats[f"avg_{selected_stat}"].rolling(window=5, min_periods=1).mean()
+
+        fig.add_trace(go.Scatter(
+            x = avg_plot_stats["gameday"],
+            y = avg_plot_stats[f"avg_{selected_stat}"],
+            mode="lines",
+            line=dict(color='#95238b'),
+            name="League Average",
+            opacity = 0.65
+        ))
         # uses the color map to add a scatterplot of raw, per-game statistics
         for team in plot_stats['team'].unique():
             team_data = plot_stats[plot_stats['team'] == team]
@@ -295,7 +332,8 @@ def player_page(player_data):
                 marker=dict(size=8, color=team_colors.get(team, '#000000')),
                 text=team_data['team'],
                 hoverinfo="text+x+y",
-                showlegend=False  
+                showlegend=False,
+                opacity= 0.5
             ))
         # dates of major career shifts, injuries, free agency, etc
         for _, row in cut_trades.iterrows():
@@ -338,7 +376,12 @@ def player_page(player_data):
         fig.update_layout(showlegend=True, legend = {'traceorder':'normal'})
         
         st.plotly_chart(fig)
+
+        st.subheader(f"Ranked {player_position} Performance per Team")
+        player_rank = get_ranked_players_per_team(player_position)
+        st.dataframe(player_rank[player_rank["player_id"] == player_id])
         
+
     st.divider()
 
 
@@ -357,7 +400,7 @@ def trade_main():
 
     performance_value = calculate_trade_value()
 
-    st.title("NFL Trade Search")
+    st.title("Hindsight Trade Search")
 
     trade_dates = filtered_trades['date']
 
@@ -370,7 +413,7 @@ def trade_main():
 
     search_name = st.text_input("Search by name:", value=selected_search)
     category_options = ["All"] + list(trade_dates.dt.year.unique())
-    trade_year_filter = st.selectbox("Filter by draft year:", category_options, index=category_options.index(selected_category))
+    trade_year_filter = st.selectbox("Filter by trade year:", category_options, index=category_options.index(selected_category))
 
     if search_name != selected_search:
         query_params["search_name"] = search_name  
