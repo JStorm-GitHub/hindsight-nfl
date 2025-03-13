@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import re
-from data.team_list import get_team_name_map
+from data.team_list import get_short_to_long_team_abbreviation_map,get_long_to_short_team_name_map
 from utils.data_loader import load_players, load_trades, get_win_loss, get_ranked_players_per_team
 
 players = load_players()
@@ -75,7 +75,7 @@ def calculate_trade_value():
 
     weekly_performance = get_win_loss()
     
-    team_name_map = get_team_name_map()
+    team_name_map = get_long_to_short_team_name_map()
 
     qb_performance = get_ranked_players_per_team("QB")
     rb_performance = get_ranked_players_per_team("RB")
@@ -179,7 +179,9 @@ def main():
     st.sidebar.page_link('pages/trade_search.py', label='Trade Search')
     st.sidebar.page_link('pages/player_search.py', label='Player Search')
     st.sidebar.page_link('pages/about.py', label='About')
-    
+
+    st.dataframe(trades)
+
     st.markdown("""
         <style>
         .main {

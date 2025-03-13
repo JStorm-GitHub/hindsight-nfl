@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import re
-from data.team_list import get_team_logos, get_team_colors
+from data.team_list import get_team_logos, get_team_colors, get_short_to_long_team_abbreviation_map,get_long_to_short_team_name_map
 from utils.data_loader import (load_players, 
                                load_trades, 
                                get_career_seasons, 
@@ -107,7 +107,7 @@ def clickable_link(date, trade1, trade2, url, teamLogo1, teamLogo2, team1Value, 
         unsafe_allow_html=True
     )
     
-def pull_trade_value(index, performance, filtered_trades):
+def pull_trade_value(index, performance, filtered_trades,team1, team2):
     # pulls trade scores at a given index
     trade = filtered_trades.loc[int(index)]
 
@@ -120,22 +120,22 @@ def pull_trade_value(index, performance, filtered_trades):
     team1_list = player_match_list1 + draft_match_list1
     team2_list = player_match_list2 + draft_match_list2
 
-    def avg_match_list(player_match_list):
+    def avg_match_list(player_match_list, team_name):
         total_sum = 0  
         count = len(player_match_list) if player_match_list else 1  
         win_weighted_list = []  
 
         for player_name in player_match_list:
-            player_data = performance[performance['name'] == player_name]
+            player_data = performance[(performance['name'] == player_name) & (performance['new_team'] == team_name)]            
             if not player_data.empty:
                 win_weighted = player_data["win_weighted"].sum()
                 total_sum += win_weighted
-                win_weighted_list.append((win_weighted, player_name))  # Store tuple
+                win_weighted_list.append((win_weighted, player_name))  
         return total_sum / count, win_weighted_list   
     
     # Compute per-team impact
-    team1_value,win_weighted_list1 = avg_match_list(team1_list)  
-    team2_value,win_weighted_list2 = avg_match_list(team2_list)
+    team1_value,win_weighted_list1 = avg_match_list(team1_list,team1)  
+    team2_value,win_weighted_list2 = avg_match_list(team2_list,team2)
 
     return team1_value, team2_value, 
 
@@ -442,6 +442,10 @@ def trade_main():
     start_idx = (page_number - 1) * ITEMS_PER_PAGE
     end_idx = start_idx + ITEMS_PER_PAGE
     paginated_data = filtered_trades.iloc[start_idx:end_idx]
+    
+    team_name_map = get_short_to_long_team_abbreviation_map()
+
+    performance_value["new_team"] = performance_value["new_team"].map(team_name_map)
 
     if len(filtered_trades)>0:
         for index, row in paginated_data.iterrows():
@@ -451,7 +455,7 @@ def trade_main():
             team2 = row["team2"]
             team1Logo = team_logos.get(team1, "images/default.png")
             team2Logo = team_logos.get(team2, "images/default.png")
-            team1Value, team2Value = pull_trade_value(index,performance_value,filtered_trades)
+            team1Value, team2Value = pull_trade_value(index,performance_value,filtered_trades,team1,team2)
             team1Value = int(team1Value)
             team2Value = int(team2Value)
             

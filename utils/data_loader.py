@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine
 from data.all_position_stats import get_bulk_position_stats, get_simple_position_stats
+from data.team_list import get_team_name_replacement_map
 import pandas as pd
 
 NFL_DATA = "sqlite:///data/nfl_merged.db"
@@ -40,6 +41,11 @@ ORDER BY transaction_date;
     df = pd.read_sql_query(query,engine)
     df = df.drop_duplicates().reset_index(drop=True)
     df['date'] = pd.to_datetime(df['date'])
+    
+    replacement_map = get_team_name_replacement_map()
+
+    df["team1"] = df["team1"].replace(replacement_map)
+    df["team2"] = df["team2"].replace(replacement_map)
     return df
 
 # this loads essential player data
@@ -68,6 +74,7 @@ ORDER BY name ASC
 
     df = pd.read_sql_query(query, engine)
     df['headshot_url'] = df['headshot_url'].fillna("https://static.www.nfl.com/image/private/f_auto,q_auto/league/tvzbhead7hjhqpcbilgc")
+
     return df
 
 # this returns the 

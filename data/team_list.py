@@ -52,7 +52,7 @@ def get_team_colors():
     }
     return team_colors
 
-def get_team_name_map():
+def get_long_to_short_team_name_map():
     TEAM_NAME_MAP = {
     "Bills": "BUF",
     "Dolphins": "MIA",
@@ -95,3 +95,51 @@ def get_team_name_map():
     "Seahawks": "SEA",
     }
     return TEAM_NAME_MAP
+
+def get_short_to_long_team_abbreviation_map():
+    TEAM_ABBREVIATION_MAP = {
+        "BUF": "Bills",
+        "MIA": "Dolphins",
+        "NE": "Patriots",
+        "NYJ": "Jets",
+        "BAL": "Ravens",
+        "CIN": "Bengals",
+        "CLE": "Browns",
+        "PIT": "Steelers",
+        "HOU": "Texans",
+        "IND": "Colts",
+        "JAX": "Jaguars",
+        "TEN": "Titans",
+        "DEN": "Broncos",
+        "KC": "Chiefs",
+        "LV": "Raiders",
+        "LAC": "Chargers",
+        "DAL": "Cowboys",
+        "NYG": "Giants",
+        "PHI": "Eagles",
+        "WAS": "Commanders",
+        "CHI": "Bears",
+        "DET": "Lions",
+        "GB": "Packers",
+        "MIN": "Vikings",
+        "ATL": "Falcons",
+        "CAR": "Panthers",
+        "NO": "Saints",
+        "TB": "Buccaneers",
+        "ARI": "Cardinals",
+        "LAR": "Rams",
+        "SF": "49ers",
+        "SEA": "Seahawks",
+    }
+    return TEAM_ABBREVIATION_MAP
+
+def get_team_name_replacement_map():
+    return {
+        "Redskins": "Commanders",
+        "Washington Football Team": "Commanders",
+        "Oilers": "Titans",
+        "St. Louis Rams": "Rams",
+        "Oakland Raiders": "Raiders",
+        "LA Raiders": "Raiders",
+        "San Diego Chargers": "Chargers",
+    }
