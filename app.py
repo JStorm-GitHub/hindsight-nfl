@@ -39,8 +39,9 @@ def find_valid_trades(trades_df):
         return pattern.findall(text) if isinstance(text, str) else []
 
     # Apply regex extraction to entire DataFrame
-    trades_df["draft_matches1"] = trades_df["acquired_team1"].apply(lambda x: extract_matches(x, draft_pattern))
-    trades_df["draft_matches2"] = trades_df["acquired_team2"].apply(lambda x: extract_matches(x, draft_pattern))
+    trades_df["draft_matches1"] = trades_df["acquired_team1"].apply(lambda x: [(match[0], match[1].strip()) for match in extract_matches(x, draft_pattern)])
+    trades_df["draft_matches2"] = trades_df["acquired_team2"].apply(lambda x: [(match[0], match[1].strip()) for match in extract_matches(x, draft_pattern)])
+
 
     trades_df["player_matches1"] = trades_df["acquired_team1"].apply(lambda x: extract_matches(x, player_pattern))
     trades_df["player_matches2"] = trades_df["acquired_team2"].apply(lambda x: extract_matches(x, player_pattern))

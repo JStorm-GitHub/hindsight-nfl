@@ -161,7 +161,7 @@ def show_trade_comp_page(index,date,team1,team2,tscore1,tscore2):
 
     def show_draft_list(draft_match_list):
         for draft_number,player_name in draft_match_list:
-            player_data = players[(players['draft_position'] == int(draft_number)) & (players['name'] == player_name.strip())]
+            player_data = players[(players['draft_position'] == int(draft_number)) & (players['name'] == player_name)]
             if not player_data.empty:
                 player_page(player_data.iloc[0])
             else:
@@ -169,7 +169,7 @@ def show_trade_comp_page(index,date,team1,team2,tscore1,tscore2):
 
     def show_player_list(player_match_list):
         for player_name in player_match_list:
-            player_data = players[(players['name'] == player_name.strip())]
+            player_data = players[(players['name'] == player_name)]
             if not player_data.empty:
                 player_page(player_data.iloc[0])
             else:
@@ -407,6 +407,7 @@ def trade_main():
         if st.button("Clear"):
                 st.query_params.clear()
                 st.rerun() 
+
     trade_dates = filtered_trades['date']
 
     ITEMS_PER_PAGE = 5
