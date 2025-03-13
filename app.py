@@ -180,8 +180,6 @@ def main():
     st.sidebar.page_link('pages/player_search.py', label='Player Search')
     st.sidebar.page_link('pages/about.py', label='About')
 
-    st.dataframe(trades)
-
     st.markdown("""
         <style>
         .main {
