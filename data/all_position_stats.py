@@ -35,9 +35,9 @@ AVG(wopr) AS avg_wopr, AVG(carries) AS avg_carries, AVG(rushing_yards) AS avg_ru
 AVG(rushing_tds) AS avg_rushing_tds, AVG(rushing_fumbles) AS avg_rushing_fumbles, 
 AVG(rushing_fumbles_lost) AS avg_rushing_fumbles_lost, AVG(rushing_first_downs) AS avg_rushing_first_downs, 
 AVG(rushing_epa) AS avg_rushing_epa, AVG(rushing_2pt_conversions) AS avg_rushing_2pt_conversions, 
-AVG(fantasy_points) AS avg_fantasy_points, AVG(fantasy_points_ppr) AS avg_fantasy_points_ppr, AVG(age) AS avg_age""")
+AVG(fantasy_points) AS avg_fantasy_points, AVG(fantasy_points_ppr) AS avg_fantasy_points_ppr, AVG(age) AS avg_age,AVG(special_teams_tds) AS avg_special_teams_tds """)
     elif position == "K" or "P":
-        return("""AVG(special_team_tds) AS avg_special_team_tds, AVG(fantasy_points) AS avg_fantasy_points, AVG(fantasy_points_ppr) AS avg_fantasy_points_ppr, AVG(age) AS avg_age""")
+        return("""AVG(special_teams_tds) AS avg_special_teams_tds, AVG(fantasy_points) AS avg_fantasy_points, AVG(fantasy_points_ppr) AS avg_fantasy_points_ppr, AVG(age) AS avg_age""")
     else:
         return ""
     
@@ -52,7 +52,7 @@ def get_simple_position_stats(position):
         return("""SUM(receiving_yards) AS sum_receiving_yards,
         PERCENT_RANK() OVER (ORDER BY SUM(receiving_yards) ASC) AS percent_rank""")
     elif position == "K" or "P":
-        return("""SUM(special_team_tds) AS sum_special_team_tds,
-        PERCENT_RANK() OVER (ORDER BY SUM(special_team_tds) ASC) AS percent_rank""")
+        return("""SUM(special_teams_tds) AS sum_special_teams_tds,
+        PERCENT_RANK() OVER (ORDER BY SUM(special_teams_tds) ASC) AS percent_rank""")
     else:
         return ""

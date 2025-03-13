@@ -270,7 +270,7 @@ def player_page(player_data):
     show_stats = True
 
     # to avoid overloading output more position-specific stats are used
-    if player_data['position']== "QB":
+    if player_position == "QB":
         selected_stat = st.selectbox(
             f"Choose one of {player_name}'s QB stat to observe",
             ("completions", "attempts", "passing_yards", "passing_tds", "interceptions", "sacks", "sack_yards", "sack_fumbles", "sack_fumbles_lost",
@@ -278,7 +278,7 @@ def player_page(player_data):
              "carries", "rushing_yards", "rushing_tds", "rushing_fumbles", "rushing_fumbles_lost", "rushing_first_downs", "rushing_epa", "rushing_2pt_conversions",
              "fantasy_points", "fantasy_points_ppr","age")
         )
-    elif player_data['position'] == "RB":
+    elif player_position == "RB":
         selected_stat = st.selectbox(
             f"Choose one of {player_name}'s RB stat to observe",
             ("carries", "rushing_yards", "rushing_tds", "rushing_fumbles", "rushing_fumbles_lost", "rushing_first_downs", "rushing_epa", "rushing_2pt_conversions", 
@@ -287,7 +287,7 @@ def player_page(player_data):
              "racr", "target_share", "air_yards_share", "wopr", 
              "fantasy_points", "fantasy_points_ppr","age")
         )
-    elif player_data['position'] == "WR" or player_data['position'] == "TE":
+    elif player_position == "WR" or player_position == "TE":
         selected_stat = st.selectbox(
             f"Choose one of {player_name}'s WR/TE stat to observe",
             ("receptions", "targets", "receiving_yards", "receiving_tds", "receiving_fumbles", "receiving_fumbles_lost", 
@@ -296,7 +296,7 @@ def player_page(player_data):
              "carries", "rushing_yards", "rushing_tds", "rushing_fumbles", "rushing_fumbles_lost", "rushing_first_downs", "rushing_epa", "rushing_2pt_conversions", 
              "fantasy_points", "fantasy_points_ppr","age")
     )
-    elif player_data['position'] == "K" or player_data['position'] == "P":
+    elif player_position == "K" or player_position == "P":
         selected_stat = st.selectbox(
             f"Choose one of {player_name}'s K/P stat to observe",
             ("special_teams_tds", 
