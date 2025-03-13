@@ -41,7 +41,7 @@ ORDER BY transaction_date;
     df = pd.read_sql_query(query,engine)
     df = df.drop_duplicates().reset_index(drop=True)
     df['date'] = pd.to_datetime(df['date'])
-    
+
     replacement_map = get_team_name_replacement_map()
 
     df["team1"] = df["team1"].replace(replacement_map)
@@ -140,9 +140,7 @@ def get_free_agency_trades(player_id):
     engine = create_engine(NFL_TRADE)
     query = """
     SELECT * FROM transactions 
-WHERE (LOWER(notes) LIKE '%free agent%'
-   OR LOWER(notes) LIKE '%contract expired%'
-   OR LOWER(notes) LIKE '%opted out%')
+WHERE (LOWER(notes) LIKE '%free agent%')
    AND player_id = :_id;
     """
     data = {'_id':player_id, }
