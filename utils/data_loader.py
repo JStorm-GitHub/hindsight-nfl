@@ -234,6 +234,7 @@ def get_ranked_players_per_team(position):
     WITH qb_ranks AS (
         SELECT 
             player_id,
+            gameday,
             player_display_name AS name,
             recent_team AS team,
             {position_stats}
@@ -253,7 +254,7 @@ def get_ranked_players_per_team(position):
     LEFT JOIN qb_ranks q 
         ON p.player_id = q.player_id 
         AND p.team = q.team
-    ORDER BY p.team ASC;
+    ORDER BY q.gameday ASC;
     """
     data = {'_position':position}
     df = pd.read_sql_query(query, engine, params=data)
