@@ -21,14 +21,14 @@ from utils.data_loader import (load_players,
 from app import find_valid_trades,calculate_trade_value
 import urllib.parse
 
-players = load_players()
-trades = load_trades()
-
 st.set_page_config(
     page_title="Hindsight Trade Search",
     page_icon="🏈",
     layout="wide"
 )
+
+players = load_players()
+trades = load_trades()
 
 def clickable_link(date, trade1, trade2, url, teamLogo1, teamLogo2, team1Value, team2Value,team1,team2):
     """Creates a styled hyperlink that looks like a button."""
@@ -146,7 +146,7 @@ def show_trade_comp_page(index,date,team1,team2,tscore1,tscore2):
     if st.button("Back to search"):
         st.query_params.clear()
         st.rerun()
-    
+ 
     st.subheader(date)
 
     filtered_trades = find_valid_trades(trades)
@@ -200,7 +200,7 @@ def player_page(player_data):
 
     encoded_player_name = urllib.parse.quote(player_name)
     
-    url = f"https://nfl-trade-analyzer-dxgzbjijmzh9t9xrgpdzri.streamlit.app/~/+/player_search?selected_id={player_id}&selected_name={encoded_player_name}"
+    url = f"https://hindsight-nfl.streamlit.app/~/+/player_search?selected_id={player_id}&selected_name={encoded_player_name}"
     
     col1, col2, col3= st.columns([1,3,3], gap="small")
     with col1:
@@ -400,8 +400,13 @@ def trade_main():
 
     performance_value = calculate_trade_value()
 
-    st.title("Hindsight Trade Search")
-
+    col1, col2 = st.columns([4, 1])
+    with col1:
+        st.title("Hindsight Trade Search") 
+    with col2:
+        if st.button("Clear"):
+                st.query_params.clear()
+                st.rerun() 
     trade_dates = filtered_trades['date']
 
     ITEMS_PER_PAGE = 5
@@ -410,6 +415,7 @@ def trade_main():
     selected_search = query_params.get("search_name", "")
     selected_category = query_params.get("trade_date", "All")
     page_number = int(query_params.get("pg",1))
+
 
     search_name = st.text_input("Search by name:", value=selected_search)
     category_options = ["All"] + list(trade_dates.dt.year.unique())

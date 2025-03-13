@@ -21,7 +21,7 @@ def about_page():
         data from after the player is traded but during the time they're playing for the acquiring team.
 
         While the methodology is simple, it provides context for controversial trades like the Chargers' 
-        [2004 NFL Draft Eli Manning trade](https://nfl-trade-analyzer-dxgzbjijmzh9t9xrgpdzri.streamlit.app/~/+/trade_search?index=56&date=2004&team1=Chargers&team2=Giants&tscore1=9&tscore2=199) and may help fantasy football managers avoid similar mistakes.
+        [2004 NFL Draft Eli Manning trade](https://hindsight-nfl.streamlit.app/~/+/trade_search?index=56&date=April%2024,%202004&team1=Chargers&team2=Giants&tscore1=61&tscore2=81) and may help fantasy football managers avoid similar mistakes.
         """
     )
 

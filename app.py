@@ -11,6 +11,12 @@ players = load_players()
 trades = load_trades()
 
 
+st.set_page_config(
+    page_title="Hindsight - NFL Trade Analysis",
+    page_icon="🏈",
+    layout="wide"
+)
+
 ### These functions are initialized on startup and cached
 @st.cache_data
 def find_valid_trades(trades_df):
@@ -167,12 +173,6 @@ def calculate_trade_value():
     return performance_value_scores
 
 
-st.set_page_config(
-    page_title="Hindsight - NFL Trade Analysis",
-    page_icon="🏈",
-    layout="wide"
-)
-
 def main(): 
     
     st.sidebar.page_link('app.py', label='Home')
@@ -194,7 +194,7 @@ def main():
     filtered_trades = find_valid_trades(trades)
     trade_dates = filtered_trades['date']
 
-    st.title("Hindsight - NFL Trade Analysis")
+    st.title("Hindsight")
     st.write("Welcome to Hindsight, an NFL Trade Analysis platform!")
     
     col1, col2, col3 = st.columns(3)
