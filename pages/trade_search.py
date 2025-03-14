@@ -107,15 +107,15 @@ def clickable_link(date, trade1, trade2, url, teamLogo1, teamLogo2, team1Value, 
         unsafe_allow_html=True
     )
     
-def pull_trade_value(index, performance, filtered_trades,team1, team2):
+def pull_trade_value(index, performance, filtered_trades, team1, team2):
     # pulls trade scores at a given index
     trade = filtered_trades.loc[int(index)]
 
+    draft_match_list1 = trade["draft_names1"]
+    draft_match_list2 = trade["draft_names2"]
+
     player_match_list1 = trade["player_matches1"]
     player_match_list2 = trade["player_matches2"]
-
-    draft_match_list1 = trade["draft_matches1"]
-    draft_match_list2 = trade["draft_matches2"]
 
     team1_list = player_match_list1 + draft_match_list1
     team2_list = player_match_list2 + draft_match_list2
@@ -130,14 +130,18 @@ def pull_trade_value(index, performance, filtered_trades,team1, team2):
             if not player_data.empty:
                 win_weighted = player_data["win_weighted"].sum()
                 total_sum += win_weighted
-                win_weighted_list.append((win_weighted, player_name))  
+            else:
+                win_weighted = 0
+                total_sum += win_weighted
+            win_weighted_list.append((player_name, win_weighted))
+
         return total_sum / count, win_weighted_list   
     
     # Compute per-team impact
-    team1_value,win_weighted_list1 = avg_match_list(team1_list,team1)  
-    team2_value,win_weighted_list2 = avg_match_list(team2_list,team2)
+    team1_value,trade_score_list1 = avg_match_list(team1_list,team1)
+    team2_value,trade_score_list2 = avg_match_list(team2_list,team2)
 
-    return team1_value, team2_value, 
+    return team1_value, team2_value, trade_score_list1, trade_score_list2
 
 
 def show_trade_comp_page(index,date,team1,team2,tscore1,tscore2):
@@ -153,42 +157,66 @@ def show_trade_comp_page(index,date,team1,team2,tscore1,tscore2):
 
     trade = filtered_trades.loc[int(index)]
 
+    performance = calculate_trade_value()
+
+    team_name_map = get_short_to_long_team_abbreviation_map()
+
+    performance["new_team"] = performance["new_team"].map(team_name_map)
+    
+    _,_, trade_score_list1,trade_score_list2 = pull_trade_value(index,performance, filtered_trades, team1, team2)
+
+    trade_score_list1 = dict(trade_score_list1)
+    trade_score_list2 = dict(trade_score_list2)
+
     draft_match_list1 = trade["draft_matches1"]
     draft_match_list2 = trade["draft_matches2"]
 
     player_match_list1 = trade["player_matches1"]
     player_match_list2 = trade["player_matches2"]
 
-    def show_draft_list(draft_match_list):
+    def show_draft_list(draft_match_list, trade_score_list):
         for draft_number,player_name in draft_match_list:
             player_data = players[(players['draft_position'] == int(draft_number)) & (players['name'] == player_name)]
-            if not player_data.empty:
-                player_page(player_data.iloc[0])
-            else:
-                st.write(f"No data given for {player_name}")
+            
+            trade_score_value = int(float(trade_score_list.get(player_name)))
 
-    def show_player_list(player_match_list):
+            if not player_data.empty:
+                player_page(player_data.iloc[0],trade_score_value=trade_score_value)
+            else:
+                with st.expander(f"No data given for {player_name}, Hindsight score: 0"):
+                    st.write(f"No data given for {player_name}")
+
+    def show_player_list(player_match_list,trade_score_list):
         for player_name in player_match_list:
             player_data = players[(players['name'] == player_name)]
+            
+            trade_score_value = int(float(trade_score_list.get(player_name)))
+
             if not player_data.empty:
-                player_page(player_data.iloc[0])
+                player_page(player_data.iloc[0],trade_score_value=trade_score_value)
             else:
-                st.write(f"No data given for {player_name}")
+                with st.expander(f"No data given for {player_name}, Hindsight score: 0"):
+                    st.write(f"No data given for {player_name}")
                 
     col1,col2 = st.columns(2)
     with col1:
-        st.subheader(f"Trade score for the {team1}: {tscore1}")
+        st.markdown(f"""
+        ### Trade score for the {team1}: <span style="background-color: #3b3c51; color: black; padding: 3px 6px; border-radius: 5px; border: 1px solid #21233b; display: inline-block;">{tscore1}</span>
+        """, unsafe_allow_html=True)
         st.divider()
-        show_draft_list(draft_match_list1)
-        show_player_list(player_match_list1)
+        show_draft_list(draft_match_list1,trade_score_list1)
+        show_player_list(player_match_list1,trade_score_list1)
     with col2:
-        st.subheader(f"Trade score for the {team2}: {tscore2}")
+        st.markdown(f"""
+        ### Trade score for the {team2}: <span style="background-color: #3b3c51; color: black; padding: 3px 6px; border-radius: 5px; border: 1px solid #21233b; display: inline-block;">{tscore2}</span>
+        """, unsafe_allow_html=True)
         st.divider()
-        show_draft_list(draft_match_list2)
-        show_player_list(player_match_list2)
+        show_draft_list(draft_match_list2,trade_score_list2)
+        show_player_list(player_match_list2,trade_score_list2)
 
 
-def player_page(player_data):
+
+def player_page(player_data, trade_score_value):
     ### Gets called per player in drafted and normal player list. 
     player_name = player_data["name"]
 
@@ -202,187 +230,204 @@ def player_page(player_data):
     
     url = f"https://hindsight-nfl.streamlit.app/~/+/player_search?selected_id={player_id}&selected_name={encoded_player_name}"
     
-    col1, col2, col3= st.columns([1,3,3], gap="small")
-    with col1:
-        st.image(player_data['headshot_url'],use_container_width=False,width=200)
-    with col2:
-        st.markdown(f"## [{player_name} ({player_position})]({url})", unsafe_allow_html=True)
-        # st.header(f"{player_name} ({player_data['position']})")
-    with col3:
-        st.subheader("Player Information")
-        st.write(f"Born: {player_data['birthdate']}")
-        st.write(f"College: {player_data['college']}")
-        st.write(f"Draft: Round {player_data['draft_position']} ({player_data['draft_year']})")
-    
-    #in future, replace with hindsight
-    stats = get_career_seasons(player_id)
-
-    years = stats['season'].tolist()
-
-    options = ["Career"] + years
-
-    selected_year = st.segmented_control(
-        "Select Year",
-        options=options,
-        format_func=lambda x: str(x),
-        selection_mode="single",
-        default="Career",
-        key = f"{player_name}"
-    )
-
-    player_start_date = player_full_career_avg_stats['start_date'].iloc[0]
-    player_end_date = player_full_career_avg_stats['end_date'].iloc[0]
-
-    # Set up trade data
-    plot_stats = get_career_player_stats(player_id)
-    plot_stats["gameday"] = pd.to_datetime(plot_stats["gameday"])
-
-    avg_plot_stats = get_league_per_game_average(player_position,player_start_date,player_end_date)
-    avg_plot_stats["gameday"] = pd.to_datetime(avg_plot_stats["gameday"])
-
-    cut_trades = get_cut_trades(player_id)
-    cut_trades['transaction_date'] = pd.to_datetime(cut_trades["transaction_date"])
-
-    free_agency = get_free_agency_trades(player_id)
-    free_agency['transaction_date'] = pd.to_datetime(free_agency["transaction_date"])
-
-    acquired_trades = get_acquired_trades(player_id)
-    acquired_trades['transaction_date'] = pd.to_datetime(acquired_trades["transaction_date"])
-
-    injuries = get_injuries_trades(player_id)
-    injuries['transaction_date'] = pd.to_datetime(injuries["transaction_date"])
-
-    # Date ranges are shifted to follow the NFL season
-    if selected_year in years:
-        start_date = pd.Timestamp(f"{selected_year}-09-01")
-        end_date = pd.Timestamp(f"{selected_year + 1}-09-01")
-        plot_stats = plot_stats[plot_stats['season'] == selected_year]
-        avg_plot_stats = avg_plot_stats[(avg_plot_stats['gameday'] >= start_date) & (avg_plot_stats['gameday'] < end_date)]
-        cut_trades = cut_trades[(cut_trades['transaction_date'] >= start_date) & (cut_trades['transaction_date'] < end_date)]
-        free_agency = free_agency[(free_agency['transaction_date'] >= start_date) & (free_agency['transaction_date'] < end_date)]
-        acquired_trades = acquired_trades[(acquired_trades['transaction_date'] >= start_date) & (acquired_trades['transaction_date'] < end_date)]
-        injuries = injuries[(injuries['transaction_date'] >= start_date) & (injuries['transaction_date'] < end_date)]
-        st.subheader(f"{selected_year} Statistics")
-    elif selected_year == "Career":
-        st.subheader(f"Career Statistics")
-
-
-    show_stats = True
-
-    # to avoid overloading output more position-specific stats are used
-    if player_position == "QB":
-        selected_stat = st.selectbox(
-            f"Choose one of {player_name}'s QB stat to observe",
-            ("completions", "attempts", "passing_yards", "passing_tds", "interceptions", "sacks", "sack_yards", "sack_fumbles", "sack_fumbles_lost",
-             "passing_air_yards", "passing_yards_after_catch", "passing_first_downs", "passing_epa", "passing_2pt_conversions", "pacr", "dakota", 
-             "carries", "rushing_yards", "rushing_tds", "rushing_fumbles", "rushing_fumbles_lost", "rushing_first_downs", "rushing_epa", "rushing_2pt_conversions",
-             "fantasy_points", "fantasy_points_ppr","age")
-        )
-    elif player_position == "RB":
-        selected_stat = st.selectbox(
-            f"Choose one of {player_name}'s RB stat to observe",
-            ("carries", "rushing_yards", "rushing_tds", "rushing_fumbles", "rushing_fumbles_lost", "rushing_first_downs", "rushing_epa", "rushing_2pt_conversions", 
-             "receptions","targets", "receiving_yards", "receiving_tds", "receiving_fumbles", "receiving_fumbles_lost", 
-             "receiving_air_yards", "receiving_yards_after_catch", "receiving_first_downs", "receiving_epa", "receiving_2pt_conversions", 
-             "racr", "target_share", "air_yards_share", "wopr", 
-             "fantasy_points", "fantasy_points_ppr","age")
-        )
-    elif player_position == "WR" or player_position == "TE":
-        selected_stat = st.selectbox(
-            f"Choose one of {player_name}'s WR/TE stat to observe",
-            ("receptions", "targets", "receiving_yards", "receiving_tds", "receiving_fumbles", "receiving_fumbles_lost", 
-             "receiving_air_yards", "receiving_yards_after_catch", "receiving_first_downs", "receiving_epa", "receiving_2pt_conversions", 
-             "racr", "target_share", "air_yards_share", "wopr", 
-             "carries", "rushing_yards", "rushing_tds", "rushing_fumbles", "rushing_fumbles_lost", "rushing_first_downs", "rushing_epa", "rushing_2pt_conversions", 
-             "fantasy_points", "fantasy_points_ppr","age")
-    )
-    elif player_position == "K" or player_position == "P":
-        selected_stat = st.selectbox(
-            f"Choose one of {player_name}'s K/P stat to observe",
-            ("special_teams_tds", 
-             "fantasy_points", "fantasy_points_ppr","age")
-    )
-    else:
-        st.write("No stats available for this position. Defensive statistics coming soon!")
-        show_stats = False
-    
-    if show_stats: 
-        team_colors = get_team_colors()
+    with st.expander(f"{player_name} ({player_position}), Hindsight score: {trade_score_value}", expanded=True):
+        col1, col2, col3= st.columns([1,3,3], gap="small")
+        with col1:
+            st.image(player_data['headshot_url'],use_container_width=False,width=200)
+        with col2:
+            st.markdown(f"""
+                <div style="line-height: 1.2;">
+                    <a href="{url}" style="font-size: 24px; font-weight: bold; color: white;">
+                        {player_name} ({player_position})
+                    </a>
+                    <div style="
+                        margin-left:10px;
+                        background-color: #3b3c51; 
+                        color: black; 
+                        padding: 3px 6px; 
+                        border-radius: 5px; 
+                        border: 1px solid #21233b; 
+                        display: inline-block; 
+                        margin-top: 5px;">
+                        {trade_score_value}
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+        with col3:
+            st.subheader("Player Information")
+            st.write(f"Born: {player_data['birthdate']}")
+            st.write(f"College: {player_data['college']}")
+            st.write(f"Draft: Round {player_data['draft_position']} ({player_data['draft_year']})")
         
-        plot_stats[f"Average_{selected_stat}"] = plot_stats[selected_stat].rolling(window=5, min_periods=1).mean()
-        fig = px.line(plot_stats, x="gameday", y=f"Average_{selected_stat}", title=f"{selected_stat} Over Time")
-        
-        avg_plot_stats[f"avg_{selected_stat}"] = avg_plot_stats[f"avg_{selected_stat}"].rolling(window=5, min_periods=1).mean()
+        #in future, replace with hindsight
+        stats = get_career_seasons(player_id)
 
-        fig.add_trace(go.Scatter(
-            x = avg_plot_stats["gameday"],
-            y = avg_plot_stats[f"avg_{selected_stat}"],
-            mode="lines",
-            line=dict(color='#95238b'),
-            name="League Average",
-            opacity = 0.65
-        ))
-        # uses the color map to add a scatterplot of raw, per-game statistics
-        for team in plot_stats['team'].unique():
-            team_data = plot_stats[plot_stats['team'] == team]
-            fig.add_trace(go.Scatter(
-                x=team_data["gameday"],
-                y=team_data[f"{selected_stat}"],
-                mode='markers',
-                marker=dict(size=8, color=team_colors.get(team, '#000000')),
-                text=team_data['team'],
-                hoverinfo="text+x+y",
-                showlegend=False,
-                opacity= 0.5
-            ))
-        # dates of major career shifts, injuries, free agency, etc
-        for _, row in cut_trades.iterrows():
-            fig.add_trace(go.Scatter(
-                x=[row["transaction_date"], row["transaction_date"]],
-                y=[0], 
-                mode="markers+text",
-                marker=dict(size = 10, color="red", symbol="circle"),
-                name = f"CUT from {row["team"]} - {row['transaction_date'].strftime('%Y-%m-%d')}",
-                opacity = 0.75
-            ))
-        for _, row in free_agency.iterrows():
-            fig.add_trace(go.Scatter(
-                x=[row["transaction_date"], row["transaction_date"]],
-                y=[0], 
-                mode="markers",
-                marker=dict(size = 10, color="blue", symbol="circle"),
-                name=f"FREE AGENT - {row['transaction_date'].strftime('%Y-%m-%d')}",  
-                opacity=0.75
-            ))
-        for _, row in acquired_trades.iterrows():
-            fig.add_trace(go.Scatter(
-                x=[row["transaction_date"], row["transaction_date"]],
-                y=[0],  
-                mode="markers",
-                marker=dict(size = 10, color="green", symbol="circle"),
-                name=f"ACQUIRED by {row["team"]} - {row['transaction_date'].strftime('%Y-%m-%d')}",  
-                opacity=0.75
-            ))
-        for _, row in injuries.iterrows():
-            fig.add_trace(go.Scatter(
-                x=[row["transaction_date"], row["transaction_date"]],
-                y=[0], 
-                mode="markers",
-                marker=dict(size = 10, color="black", symbol="circle"),
-                name=f"INJURED - {row['transaction_date'].strftime('%Y-%m-%d')}",  
-                opacity=0.75
-            ))
+        years = stats['season'].tolist()
+
+        options = ["Career"] + years
+
+        selected_year = st.segmented_control(
+            "Select Year",
+            options=options,
+            format_func=lambda x: str(x),
+            selection_mode="single",
+            default="Career",
+            key = f"{player_name}"
+        )
+
+        player_start_date = player_full_career_avg_stats['start_date'].iloc[0]
+        player_end_date = player_full_career_avg_stats['end_date'].iloc[0]
+
+        # Set up trade data
+        plot_stats = get_career_player_stats(player_id)
+        plot_stats["gameday"] = pd.to_datetime(plot_stats["gameday"])
+
+        avg_plot_stats = get_league_per_game_average(player_position,player_start_date,player_end_date)
+        avg_plot_stats["gameday"] = pd.to_datetime(avg_plot_stats["gameday"])
+
+        cut_trades = get_cut_trades(player_id)
+        cut_trades['transaction_date'] = pd.to_datetime(cut_trades["transaction_date"])
+
+        free_agency = get_free_agency_trades(player_id)
+        free_agency['transaction_date'] = pd.to_datetime(free_agency["transaction_date"])
+
+        acquired_trades = get_acquired_trades(player_id)
+        acquired_trades['transaction_date'] = pd.to_datetime(acquired_trades["transaction_date"])
+
+        injuries = get_injuries_trades(player_id)
+        injuries['transaction_date'] = pd.to_datetime(injuries["transaction_date"])
+
+        # Date ranges are shifted to follow the NFL season
+        if selected_year in years:
+            start_date = pd.Timestamp(f"{selected_year}-09-01")
+            end_date = pd.Timestamp(f"{selected_year + 1}-09-01")
+            plot_stats = plot_stats[plot_stats['season'] == selected_year]
+            avg_plot_stats = avg_plot_stats[(avg_plot_stats['gameday'] >= start_date) & (avg_plot_stats['gameday'] < end_date)]
+            cut_trades = cut_trades[(cut_trades['transaction_date'] >= start_date) & (cut_trades['transaction_date'] < end_date)]
+            free_agency = free_agency[(free_agency['transaction_date'] >= start_date) & (free_agency['transaction_date'] < end_date)]
+            acquired_trades = acquired_trades[(acquired_trades['transaction_date'] >= start_date) & (acquired_trades['transaction_date'] < end_date)]
+            injuries = injuries[(injuries['transaction_date'] >= start_date) & (injuries['transaction_date'] < end_date)]
+            st.subheader(f"{selected_year} Statistics")
+        elif selected_year == "Career":
+            st.subheader(f"Career Statistics")
+
+
+        show_stats = True
+
+        # to avoid overloading output more position-specific stats are used
+        if player_position == "QB":
+            selected_stat = st.selectbox(
+                f"Choose one of {player_name}'s QB stat to observe",
+                ("completions", "attempts", "passing_yards", "passing_tds", "interceptions", "sacks", "sack_yards", "sack_fumbles", "sack_fumbles_lost",
+                "passing_air_yards", "passing_yards_after_catch", "passing_first_downs", "passing_epa", "passing_2pt_conversions", "pacr", "dakota", 
+                "carries", "rushing_yards", "rushing_tds", "rushing_fumbles", "rushing_fumbles_lost", "rushing_first_downs", "rushing_epa", "rushing_2pt_conversions",
+                "fantasy_points", "fantasy_points_ppr","age")
+            )
+        elif player_position == "RB":
+            selected_stat = st.selectbox(
+                f"Choose one of {player_name}'s RB stat to observe",
+                ("carries", "rushing_yards", "rushing_tds", "rushing_fumbles", "rushing_fumbles_lost", "rushing_first_downs", "rushing_epa", "rushing_2pt_conversions", 
+                "receptions","targets", "receiving_yards", "receiving_tds", "receiving_fumbles", "receiving_fumbles_lost", 
+                "receiving_air_yards", "receiving_yards_after_catch", "receiving_first_downs", "receiving_epa", "receiving_2pt_conversions", 
+                "racr", "target_share", "air_yards_share", "wopr", 
+                "fantasy_points", "fantasy_points_ppr","age")
+            )
+        elif player_position == "WR" or player_position == "TE":
+            selected_stat = st.selectbox(
+                f"Choose one of {player_name}'s WR/TE stat to observe",
+                ("receptions", "targets", "receiving_yards", "receiving_tds", "receiving_fumbles", "receiving_fumbles_lost", 
+                "receiving_air_yards", "receiving_yards_after_catch", "receiving_first_downs", "receiving_epa", "receiving_2pt_conversions", 
+                "racr", "target_share", "air_yards_share", "wopr", 
+                "carries", "rushing_yards", "rushing_tds", "rushing_fumbles", "rushing_fumbles_lost", "rushing_first_downs", "rushing_epa", "rushing_2pt_conversions", 
+                "fantasy_points", "fantasy_points_ppr","age")
+        )
+        elif player_position == "K" or player_position == "P":
+            selected_stat = st.selectbox(
+                f"Choose one of {player_name}'s K/P stat to observe",
+                ("special_teams_tds", 
+                "fantasy_points", "fantasy_points_ppr","age")
+        )
+        else:
+            st.write("No stats available for this position. Defensive statistics coming soon!")
+            show_stats = False
+        
+        if show_stats: 
+            team_colors = get_team_colors()
             
-        fig.update_layout(showlegend=True, legend = {'traceorder':'normal'})
-        
-        st.plotly_chart(fig)
+            plot_stats[f"Average_{selected_stat}"] = plot_stats[selected_stat].rolling(window=5, min_periods=1).mean()
+            fig = px.line(plot_stats, x="gameday", y=f"Average_{selected_stat}", title=f"{selected_stat} Over Time")
+            
+            avg_plot_stats[f"avg_{selected_stat}"] = avg_plot_stats[f"avg_{selected_stat}"].rolling(window=5, min_periods=1).mean()
 
-        st.subheader(f"Ranked {player_position} Performance per Team")
-        player_rank = get_ranked_players_per_team(player_position)
-        st.dataframe(player_rank[player_rank["player_id"] == player_id])
-        
+            fig.add_trace(go.Scatter(
+                x = avg_plot_stats["gameday"],
+                y = avg_plot_stats[f"avg_{selected_stat}"],
+                mode="lines",
+                line=dict(color='#95238b'),
+                name="League Average",
+                opacity = 0.65
+            ))
+            # uses the color map to add a scatterplot of raw, per-game statistics
+            for team in plot_stats['team'].unique():
+                team_data = plot_stats[plot_stats['team'] == team]
+                fig.add_trace(go.Scatter(
+                    x=team_data["gameday"],
+                    y=team_data[f"{selected_stat}"],
+                    mode='markers',
+                    marker=dict(size=8, color=team_colors.get(team, '#000000')),
+                    text=team_data['team'],
+                    hoverinfo="text+x+y",
+                    showlegend=False,
+                    opacity= 0.75
+                ))
+            # dates of major career shifts, injuries, free agency, etc
+            for _, row in cut_trades.iterrows():
+                fig.add_trace(go.Scatter(
+                    x=[row["transaction_date"], row["transaction_date"]],
+                    y=[0], 
+                    mode="markers+text",
+                    marker=dict(size = 10, color="red", symbol="circle"),
+                    name = f"CUT from {row["team"]} - {row['transaction_date'].strftime('%Y-%m-%d')}",
+                    opacity = 0.75
+                ))
+            for _, row in free_agency.iterrows():
+                fig.add_trace(go.Scatter(
+                    x=[row["transaction_date"], row["transaction_date"]],
+                    y=[0], 
+                    mode="markers",
+                    marker=dict(size = 10, color="blue", symbol="circle"),
+                    name=f"FREE AGENT - {row['transaction_date'].strftime('%Y-%m-%d')}",  
+                    opacity=0.75
+                ))
+            for _, row in acquired_trades.iterrows():
+                fig.add_trace(go.Scatter(
+                    x=[row["transaction_date"], row["transaction_date"]],
+                    y=[0],  
+                    mode="markers",
+                    marker=dict(size = 10, color="green", symbol="circle"),
+                    name=f"ACQUIRED by {row["team"]} - {row['transaction_date'].strftime('%Y-%m-%d')}",  
+                    opacity=0.75
+                ))
+            for _, row in injuries.iterrows():
+                fig.add_trace(go.Scatter(
+                    x=[row["transaction_date"], row["transaction_date"]],
+                    y=[0], 
+                    mode="markers",
+                    marker=dict(size = 10, color="black", symbol="circle"),
+                    name=f"INJURED - {row['transaction_date'].strftime('%Y-%m-%d')}",  
+                    opacity=0.75
+                ))
+                
+            fig.update_layout(showlegend=True, legend = {'traceorder':'normal'})
+            
+            st.plotly_chart(fig)
 
-    st.divider()
+            st.subheader(f"Ranked {player_position} Performance per Team")
+            player_rank = get_ranked_players_per_team(player_position)
+            st.dataframe(player_rank[player_rank["player_id"] == player_id])
+            
+
+    # st.divider()
 
 
 def trade_main():
@@ -394,9 +439,6 @@ def trade_main():
 
     # copies formatted valid trade
     filtered_trades = find_valid_trades(trades)
-    #### fix this
-    filtered_trades["draft_matches1"] = filtered_trades["draft_matches1"].apply(lambda x: [name for _, name in x] if isinstance(x, list) else [])
-    filtered_trades["draft_matches2"] = filtered_trades["draft_matches2"].apply(lambda x: [name for _, name in x] if isinstance(x, list) else [])
 
     performance_value = calculate_trade_value()
 
@@ -456,7 +498,7 @@ def trade_main():
             team2 = row["team2"]
             team1Logo = team_logos.get(team1, "images/default.png")
             team2Logo = team_logos.get(team2, "images/default.png")
-            team1Value, team2Value = pull_trade_value(index,performance_value,filtered_trades,team1,team2)
+            team1Value, team2Value,_,_ = pull_trade_value(index,performance_value,filtered_trades,team1,team2)
             team1Value = int(team1Value)
             team2Value = int(team2Value)
             

@@ -42,6 +42,8 @@ def find_valid_trades(trades_df):
     trades_df["draft_matches1"] = trades_df["acquired_team1"].apply(lambda x: [(match[0], match[1].strip()) for match in extract_matches(x, draft_pattern)])
     trades_df["draft_matches2"] = trades_df["acquired_team2"].apply(lambda x: [(match[0], match[1].strip()) for match in extract_matches(x, draft_pattern)])
 
+    trades_df["draft_names1"] = trades_df["draft_matches1"].apply(lambda x: [name for _, name in x] if isinstance(x, list) else [])
+    trades_df["draft_names2"] = trades_df["draft_matches2"].apply(lambda x: [name for _, name in x] if isinstance(x, list) else [])
 
     trades_df["player_matches1"] = trades_df["acquired_team1"].apply(lambda x: extract_matches(x, player_pattern))
     trades_df["player_matches2"] = trades_df["acquired_team2"].apply(lambda x: extract_matches(x, player_pattern))
@@ -98,18 +100,18 @@ def calculate_trade_value():
         columns={"team2": "new_team", "player_matches2": "name"}
     )
 
-    filtered_trades["draft_matches1"] = filtered_trades["draft_matches1"].apply(lambda x: [name for _, name in x] if isinstance(x, list) else [])
+    # filtered_trades["draft_matches1"] = filtered_trades["draft_matches1"].apply(lambda x: [name for _, name in x] if isinstance(x, list) else [])
 
     # Explode into separate rows and rename columns
-    draft_trades_team1 = filtered_trades.explode("draft_matches1")[["team1", "draft_matches1"]].rename(
-        columns={"team1": "new_team", "draft_matches1": "name"}
+    draft_trades_team1 = filtered_trades.explode("draft_names1")[["team1", "draft_names1"]].rename(
+        columns={"team1": "new_team", "draft_names1": "name"}
     )
 
     # If you have draft_matches2 and need the same transformation:
-    filtered_trades["draft_matches2"] = filtered_trades["draft_matches2"].apply(lambda x: [name for _, name in x] if isinstance(x, list) else [])
+    # filtered_trades["draft_matches2"] = filtered_trades["draft_matches2"].apply(lambda x: [name for _, name in x] if isinstance(x, list) else [])
 
-    draft_trades_team2 = filtered_trades.explode("draft_matches2")[["team2", "draft_matches2"]].rename(
-        columns={"team2": "new_team", "draft_matches2": "name"}
+    draft_trades_team2 = filtered_trades.explode("draft_names2")[["team2", "draft_names2"]].rename(
+        columns={"team2": "new_team", "draft_names2": "name"}
     )
 
     trade_players = pd.concat([trades_team1, trades_team2,draft_trades_team1,draft_trades_team2]).dropna()
@@ -193,6 +195,7 @@ def main():
     """, unsafe_allow_html=True)
 
     filtered_trades = find_valid_trades(trades)
+
     trade_dates = filtered_trades['date']
 
     st.title("Hindsight")
