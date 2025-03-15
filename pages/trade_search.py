@@ -144,11 +144,13 @@ def pull_trade_value(index, performance, filtered_trades, team1, team2):
     return team1_value, team2_value, trade_score_list1, trade_score_list2
 
 
-def show_trade_comp_page(index,date,team1,team2,tscore1,tscore2):
+def show_trade_comp_page(index,page,date):
     # gets called when trade query parameters are set. splits up trade into rows for player_page
     
     if st.button("Back to search"):
         st.query_params.clear()
+        st.query_params.pg = page
+        
         st.rerun()
  
     st.subheader(date)
@@ -157,13 +159,16 @@ def show_trade_comp_page(index,date,team1,team2,tscore1,tscore2):
 
     trade = filtered_trades.loc[int(index)]
 
+    team1 = trade["team1"]
+    team2 = trade["team2"]
+
     performance = calculate_trade_value()
 
     team_name_map = get_short_to_long_team_abbreviation_map()
 
     performance["new_team"] = performance["new_team"].map(team_name_map)
     
-    _,_, trade_score_list1,trade_score_list2 = pull_trade_value(index,performance, filtered_trades, team1, team2)
+    tscore1, tscore2, trade_score_list1,trade_score_list2 = pull_trade_value(index,performance, filtered_trades, team1, team2)
 
     trade_score_list1 = dict(trade_score_list1)
     trade_score_list2 = dict(trade_score_list2)
@@ -201,14 +206,14 @@ def show_trade_comp_page(index,date,team1,team2,tscore1,tscore2):
     col1,col2 = st.columns(2)
     with col1:
         st.markdown(f"""
-        ### Trade score for the {team1}: <span style="background-color: #3b3c51; color: black; padding: 3px 6px; border-radius: 5px; border: 1px solid #21233b; display: inline-block;">{tscore1}</span>
+        ### Trade score for the {team1}: <span style="background-color: #3b3c51; color: black; padding: 3px 6px; border-radius: 5px; border: 1px solid #21233b; display: inline-block;">{int(tscore1)}</span>
         """, unsafe_allow_html=True)
         st.divider()
         show_draft_list(draft_match_list1,trade_score_list1)
         show_player_list(player_match_list1,trade_score_list1)
     with col2:
         st.markdown(f"""
-        ### Trade score for the {team2}: <span style="background-color: #3b3c51; color: black; padding: 3px 6px; border-radius: 5px; border: 1px solid #21233b; display: inline-block;">{tscore2}</span>
+        ### Trade score for the {team2}: <span style="background-color: #3b3c51; color: black; padding: 3px 6px; border-radius: 5px; border: 1px solid #21233b; display: inline-block;">{int(tscore2)}</span>
         """, unsafe_allow_html=True)
         st.divider()
         show_draft_list(draft_match_list2,trade_score_list2)
@@ -430,7 +435,7 @@ def player_page(player_data, trade_score_value):
     # st.divider()
 
 
-def trade_main():
+def trade_main(page):
 
     st.sidebar.page_link('app.py', label='Home')
     st.sidebar.page_link('pages/trade_search.py', label='Trade Search')
@@ -455,6 +460,7 @@ def trade_main():
     ITEMS_PER_PAGE = 5
 
     query_params = st.query_params
+    # st.query_params.pg = page
     selected_search = query_params.get("search_name", "")
     selected_category = query_params.get("trade_date", "All")
     page_number = int(query_params.get("pg",1))
@@ -505,7 +511,7 @@ def trade_main():
             clickable_link(f"{date}",
                            f"{team1} acquire {row["acquired_team1"]}", 
                            f"{team2} acquire {row["acquired_team2"]}", 
-                           f"?index={index}&date={date}&team1={row["team1"]}&team2={row["team2"]}&tscore1={team1Value}&tscore2={team2Value}", 
+                           f"?pg={page}&index={index}&date={date}", 
                            team1Logo,team2Logo,team1Value,team2Value,team1,team2)
     else:
         st.write("No players found matching your criteria.")
@@ -525,14 +531,17 @@ def trade_main():
     st.divider()
 
 params = st.query_params
+page = params.get("pg",1)
 index = params.get("index")
 transaction_date = params.get("date")
-team1 = params.get("team1")
-team2 = params.get("team2")
-tscore1 = params.get("tscore1")
-tscore2 = params.get("tscore2")
+
+# team1 = params.get("team1")
+# team2 = params.get("team2")
+# tscore1 = params.get("tscore1")
+# tscore2 = params.get("tscore2")
+
 
 if index:
-    show_trade_comp_page(index,transaction_date,team1,team2,tscore1,tscore2)
+    show_trade_comp_page(index,page,transaction_date)
 else:
-    trade_main()
+    trade_main(page)
