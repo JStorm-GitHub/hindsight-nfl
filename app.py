@@ -1,11 +1,11 @@
 import streamlit as st
-from utils.data_loader import load_players, load_trades
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
 import re
-from data.team_list import get_short_to_long_team_abbreviation_map,get_long_to_short_team_name_map
-from utils.data_loader import load_players, load_trades, get_win_loss, get_ranked_players_per_team
+from data.team_list import get_long_to_short_team_name_map
+from utils.data_loader import (load_players,
+                               load_trades,
+                               get_win_loss,
+                               get_ranked_players_per_team)
 
 players = load_players()
 trades = load_trades()
@@ -17,7 +17,8 @@ st.set_page_config(
     layout="wide"
 )
 
-### These functions are initialized on startup and cached
+
+# These functions are initialized on startup and cached
 @st.cache_data
 def find_valid_trades(trades_df):
     # formats trade database to filter out player names, draft position, etc.
@@ -66,7 +67,7 @@ def find_valid_trades(trades_df):
     valid_trades_df = trades_df[(trades_df["team1_valid"]) & (trades_df["team2_valid"])]
 
     # Drop temporary columns
-    valid_trades_df = valid_trades_df.drop(columns=["team1_valid","team2_valid"])
+    valid_trades_df = valid_trades_df.drop(columns=["team1_valid", "team2_valid"])
 
     return valid_trades_df
 
@@ -77,7 +78,7 @@ def calculate_trade_value():
     filtered_trades = find_valid_trades(trades)
 
     weekly_performance = get_win_loss()
-    
+
     team_name_map = get_long_to_short_team_name_map()
 
     qb_performance = get_ranked_players_per_team("QB")
@@ -87,11 +88,15 @@ def calculate_trade_value():
     k_performance = get_ranked_players_per_team("K")
     p_performance = get_ranked_players_per_team("P")
 
-    player_performance = pd.concat([qb_performance, rb_performance, wr_performance,te_performance,k_performance,p_performance], ignore_index=True)
+    player_performance = pd.concat([qb_performance,
+                                    rb_performance,
+                                    wr_performance,
+                                    te_performance,
+                                    k_performance,
+                                    p_performance], ignore_index=True)
 
     filtered_trades["team1"] = filtered_trades["team1"].map(team_name_map)
     filtered_trades["team2"] = filtered_trades["team2"].map(team_name_map)
-    
 
     trades_team1 = filtered_trades.explode("player_matches1")[["team1", "player_matches1"]].rename(
         columns={"team1": "new_team", "player_matches1": "name"}
@@ -114,7 +119,7 @@ def calculate_trade_value():
         columns={"team2": "new_team", "draft_names2": "name"}
     )
 
-    trade_players = pd.concat([trades_team1, trades_team2,draft_trades_team1,draft_trades_team2]).dropna()
+    trade_players = pd.concat([trades_team1, trades_team2, draft_trades_team1, draft_trades_team2]).dropna()
 
     performance_for_new_team = weekly_performance.merge(trade_players, on="name", how="inner")
 
@@ -123,7 +128,7 @@ def calculate_trade_value():
     ]
 
     # Assign weights to wins
-    def assign_weight(week,win):
+    def assign_weight(week, win):
         if win == 1:  # Win
             if week < 18:  # Regular season
                 return 1
@@ -176,8 +181,7 @@ def calculate_trade_value():
     return performance_value_scores
 
 
-def main(): 
-    
+def main():
     st.sidebar.page_link('app.py', label='Home')
     st.sidebar.page_link('pages/trade_search.py', label='Trade Search')
     st.sidebar.page_link('pages/player_search.py', label='Player Search')
@@ -200,7 +204,7 @@ def main():
 
     st.title("Hindsight")
     st.write("Welcome to Hindsight, an NFL Trade Analysis platform!")
-    
+
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Total Players", len(players))

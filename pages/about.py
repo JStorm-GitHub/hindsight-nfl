@@ -14,23 +14,21 @@ def about_page():
     # Introduction
     st.markdown(
         """
-        Welcome to **Hindsight**, a historical NFL trade analyzer! This tool 
-        provides a straightforward way to evaluate the success of NFL trades. 
-        ### Here's how it works:
-        For each NFL trade in the range (2002 to 2025), 2 trade scores are assigned, one for each team. 
-        This trade score is an average of each traded player's individual trade score. 
-
-        For example: the April 19th, [2005 Broncos-Commanders/Redskins](https://hindsight-nfl.streamlit.app/trade_search?index=89&date=April%2019,%202005&team1=Broncos&team2=Commanders&tscore1=32&tscore2=73) 
-        trade of Brandon Marshall, Jason Campbell, Karl Paymah, and Manny Lawrence, received an average 32-73 for all players traded to the Broncos and Commanders respectively (0 being the value assigned to players with no data).
-
-        A player's trade score is calculated from their total performance while at the team they were traded to. 
-        There are several factors involved in this score:\n
-        - the win/loss percentage of the team during their tenure\n
-        - the position they play (higher value for key players)\n
-        - the player's league-wide ranking in position-specific stats during their time on the team\n
-
-        While the methodology is simple, it provides context for controversial trades like the Chargers' 
-        [2004 NFL Draft Eli Manning trade](https://hindsight-nfl.streamlit.app/~/+/trade_search?index=56&date=April%2024,%202004&team1=Chargers&team2=Giants&tscore1=61&tscore2=81) and may help fantasy football managers avoid similar mistakes.
+        **Hindsight** is a historical NFL trade analysis tool that evaluates the impact of trades from 2002 to 2025. Each trade is assigned two scores—one per team—based on the performance of the players involved.
+        
+        #### How Trade Scores Work
+        - Each player in a trade receives an individual score reflecting their contributions while on the team.
+        - A team’s trade score is the average of all its acquired players’ scores.
+        
+        **Example:**
+        The [April 19, 2005 Broncos-Commanders trade](https://hindsight-nfl.streamlit.app/trade_search?index=89&date=April%2019,%202005&team1=Broncos&team2=Commanders&tscore1=32&tscore2=73) involved Brandon Marshall, Jason Campbell, Karl Paymah, and Manny Lawrence. The Broncos received a trade score of **32**, while the Commanders scored **73**.
+        
+        #### Factors Affecting Player Scores
+        - **Team performance** (win/loss record during their tenure)
+        - **Positional value** (key positions have higher impact)
+        - **Individual performance** (league-wide ranking in position-specific stats)
+        
+        While simple, this method provides context for trades like the [2004 Eli Manning trade](https://hindsight-nfl.streamlit.app/trade_search?index=56&date=April%2024,%202004&team1=Chargers&team2=Giants&tscore1=61&tscore2=81) and can offer insights for fantasy football managers.
         """
     )
 

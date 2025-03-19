@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from utils.data_loader import (load_players, 
+from utils.data_loader import (load_players,
                                load_trades,
                                get_career_seasons,
                                get_career_player_stats,
@@ -26,7 +26,8 @@ st.set_page_config(
     layout="wide"
 )
 
-def clickable_link(label, url,image_url):
+
+def clickable_link(label, url, image_url):
     """Creates a styled hyperlink that looks like a button."""
     st.markdown(
         f"""
@@ -67,7 +68,8 @@ def clickable_link(label, url,image_url):
         unsafe_allow_html=True
     )
 
-def show_player_page(player_id,player_name):
+
+def show_player_page(player_id, player_name):
 
     if st.button("Back to search"):
         st.query_params.clear()
@@ -83,9 +85,9 @@ def show_player_page(player_id,player_name):
 
     player_full_career_avg_stats = get_player_full_career_average(player_id,player_position)
 
-    col1, col2, col3= st.columns([1,3,3], gap="small")
+    col1, col2, col3 = st.columns([1,3, 3], gap="small")
     with col1:
-        st.image(player_data['headshot_url'],use_container_width=False,width=200)
+        st.image(player_data['headshot_url'], use_container_width=False, width=200)
     with col2:
         st.subheader("Player profile:")
         st.title(f"{player_name}")
@@ -114,10 +116,10 @@ def show_player_page(player_id,player_name):
 
     plot_stats = get_career_player_stats(player_id)
     plot_stats["gameday"] = pd.to_datetime(plot_stats["gameday"])
-    
-    avg_plot_stats = get_league_per_game_average(player_position,player_start_date,player_end_date)
+
+    avg_plot_stats = get_league_per_game_average(player_position, player_start_date, player_end_date)
     avg_plot_stats["gameday"] = pd.to_datetime(avg_plot_stats["gameday"])
-    
+
     cut_trades = get_cut_trades(player_id)
     cut_trades['transaction_date'] = pd.to_datetime(cut_trades["transaction_date"])
 
@@ -129,7 +131,6 @@ def show_player_page(player_id,player_name):
 
     injuries = get_injuries_trades(player_id)
     injuries['transaction_date'] = pd.to_datetime(injuries["transaction_date"])
-
 
     if selected_year in years:
         start_date = pd.Timestamp(f"{selected_year}-09-01")
@@ -331,6 +332,6 @@ selected_id = params.get("selected_id")
 selected_name = params.get("selected_name")
 
 if selected_id:
-    show_player_page(selected_id,selected_name)
+    show_player_page(selected_id, selected_name)
 else:
     show_search_page()

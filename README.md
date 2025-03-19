@@ -2,23 +2,22 @@
 
 🚀 **[View Live Demo](https://hindsight-nfl.streamlit.app/)**
 
-Welcome to **Hindsight**, a historical NFL trade analyzer! This tool 
-provides a straightforward way to evaluate the success of NFL trades. 
-### Here's how it works:
-For each NFL trade in the range (2002 to 2025), 2 trade scores are assigned, one for each team. 
-This trade score is an average of each traded player's individual trade score. 
+# **Hindsight – NFL Trade Analyzer**  
 
-For example: the April 19th, [2005 Broncos-Commanders/Redskins](https://hindsight-nfl.streamlit.app/trade_search?index=89&date=April%2019,%202005&team1=Broncos&team2=Commanders&tscore1=32&tscore2=73) 
-trade of Brandon Marshall, Jason Campbell, Karl Paymah, and Manny Lawrence, received an average 32-73 for all players traded to the Broncos and Commanders respectively (0 being the value assigned to players with no data).
+Hindsight is a historical NFL trade analysis tool that evaluates the success of trades from **2002 to 2025**. By assigning **trade scores** to each team involved, it provides an easy way to assess past transactions.
 
-A player's trade score is calculated from their total performance while at the team they were traded to. 
-There are several factors involved in this score:\n
-- the win/loss percentage of the team during their tenure\n
-- the position they play (higher value for key players)\n
-- the player's league-wide ranking in position-specific stats during their time on the team\n
+## **How It Works**  
 
-While the methodology is simple, it provides context for controversial trades like the Chargers' 
-[2004 NFL Draft Eli Manning trade](https://hindsight-nfl.streamlit.app/~/+/trade_search?index=56&date=April%2024,%202004&team1=Chargers&team2=Giants&tscore1=61&tscore2=81) and may help fantasy football managers avoid similar mistakes.
+Each trade is scored based on the **average trade score** of the players exchanged.  
+
+For example, the [April 19, 2005 Broncos-Commanders trade](https://hindsight-nfl.streamlit.app/trade_search?index=89&date=April%2019,%202005&team1=Broncos&team2=Commanders&tscore1=32&tscore2=73) involving **Brandon Marshall, Jason Campbell, Karl Paymah, and Manny Lawrence** resulted in a **32-73 split**—with 0 assigned to players lacking data.  
+
+A **player’s trade score** is calculated based on:  
+- **Team success** (win/loss percentage during their tenure)  
+- **Position value** (higher impact for key positions)  
+- **Performance** (league-wide ranking in position-specific stats)  
+
+This simple methodology adds context to trades like the [2004 Eli Manning draft trade](https://hindsight-nfl.streamlit.app/~/+/trade_search?index=56&date=April%2024,%202004&team1=Chargers&team2=Giants&tscore1=61&tscore2=81) and can help fantasy football managers avoid similar mistakes.  
 
 ---
 

@@ -36,102 +36,106 @@ def get_team_logos():
     }
     return team_logos
 
+
 def get_team_colors():
     team_colors = {
-    'ARI': '#97233F', 'ATL': '#A71930', 'BAL': '#241773',
-    'BUF': '#00338D', 'CAR': '#0085CA', 'CHI': '#0B162A',
-    'CIN': '#FB4F14', 'CLE': '#311D00', 'DAL': '#041E42',
-    'DEN': '#002244', 'DET': '#0076B6', 'GB': '#203731',
-    'HOU': '#03202F', 'IND': '#002C5F', 'JAX': '#006778',
-    'KC': '#E31837', 'LV': '#A5ACAF', 'LAC': '#0080C6',
-    'LAR': '#003594', 'MIA': '#008E97', 'MIN': '#4F2683',
-    'NE': '#002244', 'NO': '#D3BC8D', 'NYG': '#0B2265',
-    'NYJ': '#125740', 'PHI': '#004C54', 'PIT': '#FFB612',
-    'SF': '#AA0000', 'SEA': '#002244', 'TB': '#D50A0A',
-    'TEN': '#4B92DB', 'WAS': '#773141'
+        'ARI': '#97233F', 'ATL': '#A71930', 'BAL': '#241773',
+        'BUF': '#00338D', 'CAR': '#0085CA', 'CHI': '#0B162A',
+        'CIN': '#FB4F14', 'CLE': '#311D00', 'DAL': '#041E42',
+        'DEN': '#002244', 'DET': '#0076B6', 'GB': '#203731',
+        'HOU': '#03202F', 'IND': '#002C5F', 'JAX': '#006778',
+        'KC': '#E31837', 'LV': '#A5ACAF', 'LAC': '#0080C6',
+        'LAR': '#003594', 'MIA': '#008E97', 'MIN': '#4F2683',
+        'NE': '#002244', 'NO': '#D3BC8D', 'NYG': '#0B2265',
+        'NYJ': '#125740', 'PHI': '#004C54', 'PIT': '#FFB612',
+        'SF': '#AA0000', 'SEA': '#002244', 'TB': '#D50A0A',
+        'TEN': '#4B92DB', 'WAS': '#773141'
     }
     return team_colors
 
+
 def get_long_to_short_team_name_map():
     TEAM_NAME_MAP = {
-    "Bills": "BUF",
-    "Dolphins": "MIA",
-    "Patriots": "NE",
-    "Jets": "NYJ",
-    "Ravens": "BAL",
-    "Bengals": "CIN",
-    "Browns": "CLE",
-    "Steelers": "PIT",
-    "Texans": "HOU",
-    "Colts": "IND",
-    "Jaguars": "JAX",
-    "Titans": "TEN",
-    "Oilers": "TEN",  # Houston Oilers → Tennessee Titans
-    "Broncos": "DEN",
-    "Chiefs": "KC",
-    "Raiders": "LV",
-    "Oakland Raiders": "LV",  # Oakland → Las Vegas
-    "LA Raiders": "LV",  # LA Raiders → Las Vegas
-    "Chargers": "LAC",
-    "San Diego Chargers": "LAC",  # San Diego → LA
-    "Cowboys": "DAL",
-    "Giants": "NYG",
-    "Eagles": "PHI",
-    "Commanders": "WAS",
-    "Washington Football Team": "WAS",  # Temporary name (2020-2021)
-    "Redskins": "WAS",  
-    "Bears": "CHI",
-    "Lions": "DET",
-    "Packers": "GB",
-    "Vikings": "MIN",
-    "Falcons": "ATL",
-    "Panthers": "CAR",
-    "Saints": "NO",
-    "Buccaneers": "TB",
-    "Cardinals": "ARI",
-    "Rams": "LAR",
-    "St. Louis Rams": "LAR",  # St. Louis → LA
-    "49ers": "SF",
-    "Seahawks": "SEA",
+        "Bills": "BUF",
+        "Dolphins": "MIA",
+        "Patriots": "NE",
+        "Jets": "NYJ",
+        "Ravens": "BAL",
+        "Bengals": "CIN",
+        "Browns": "CLE",
+        "Steelers": "PIT",
+        "Texans": "HOU",
+        "Colts": "IND",
+        "Jaguars": "JAX",
+        "Titans": "TEN",
+        "Oilers": "TEN",  # Houston Oilers → Tennessee Titans
+        "Broncos": "DEN",
+        "Chiefs": "KC",
+        "Raiders": "LV",
+        "Oakland Raiders": "LV",  # Oakland → Las Vegas
+        "LA Raiders": "LV",  # LA Raiders → Las Vegas
+        "Chargers": "LAC",
+        "San Diego Chargers": "LAC",  # San Diego → LA
+        "Cowboys": "DAL",
+        "Giants": "NYG",
+        "Eagles": "PHI",
+        "Commanders": "WAS",
+        "Washington Football Team": "WAS",  # Temporary name (2020-2021)
+        "Redskins": "WAS",
+        "Bears": "CHI",
+        "Lions": "DET",
+        "Packers": "GB",
+        "Vikings": "MIN",
+        "Falcons": "ATL",
+        "Panthers": "CAR",
+        "Saints": "NO",
+        "Buccaneers": "TB",
+        "Cardinals": "ARI",
+        "Rams": "LAR",
+        "St. Louis Rams": "LAR",  # St. Louis → LA
+        "49ers": "SF",
+        "Seahawks": "SEA",
     }
     return TEAM_NAME_MAP
 
+
 def get_short_to_long_team_abbreviation_map():
     TEAM_ABBREVIATION_MAP = {
-        "BUF": "Bills",
-        "MIA": "Dolphins",
-        "NE": "Patriots",
-        "NYJ": "Jets",
-        "BAL": "Ravens",
-        "CIN": "Bengals",
-        "CLE": "Browns",
-        "PIT": "Steelers",
-        "HOU": "Texans",
-        "IND": "Colts",
-        "JAX": "Jaguars",
-        "TEN": "Titans",
-        "DEN": "Broncos",
-        "KC": "Chiefs",
-        "LV": "Raiders",
-        "LAC": "Chargers",
-        "DAL": "Cowboys",
-        "NYG": "Giants",
-        "PHI": "Eagles",
-        "WAS": "Commanders",
-        "CHI": "Bears",
-        "DET": "Lions",
-        "GB": "Packers",
-        "MIN": "Vikings",
-        "ATL": "Falcons",
-        "CAR": "Panthers",
-        "NO": "Saints",
-        "TB": "Buccaneers",
-        "ARI": "Cardinals",
-        "LAR": "Rams",
-        "SF": "49ers",
-        "SEA": "Seahawks",
+            "BUF": "Bills",
+            "MIA": "Dolphins",
+            "NE": "Patriots",
+            "NYJ": "Jets",
+            "BAL": "Ravens",
+            "CIN": "Bengals",
+            "CLE": "Browns",
+            "PIT": "Steelers",
+            "HOU": "Texans",
+            "IND": "Colts",
+            "JAX": "Jaguars",
+            "TEN": "Titans",
+            "DEN": "Broncos",
+            "KC": "Chiefs",
+            "LV": "Raiders",
+            "LAC": "Chargers",
+            "DAL": "Cowboys",
+            "NYG": "Giants",
+            "PHI": "Eagles",
+            "WAS": "Commanders",
+            "CHI": "Bears",
+            "DET": "Lions",
+            "GB": "Packers",
+            "MIN": "Vikings",
+            "ATL": "Falcons",
+            "CAR": "Panthers",
+            "NO": "Saints",
+            "TB": "Buccaneers",
+            "ARI": "Cardinals",
+            "LAR": "Rams",
+            "SF": "49ers",
+            "SEA": "Seahawks",
     }
     return TEAM_ABBREVIATION_MAP
+
 
 def get_team_name_replacement_map():
     return {
